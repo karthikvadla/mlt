@@ -27,6 +27,7 @@ from string import Template
 from subprocess import Popen, PIPE
 from termcolor import colored
 
+from mlt import KUBE_DEBUG
 from mlt.commands import Command
 from mlt.utils import (build_helpers, config_helpers, files,
                        kubernetes_helpers, progress_bar, process_helpers)
@@ -43,31 +44,12 @@ class DeployCommand(Command):
             print("Skipping image push")
         else:
             self._push()
-
-        app_name = self.config['name']
-        namespace = self.config['namespace']
-        remote_container_name = files.fetch_action_arg(
-            'push', 'last_remote_container')
-
-        print("Deploying {}".format(remote_container_name))
-
-        # Write new container to deployment
-        for filename in os.listdir("k8s-templates"):
-            with open(os.path.join('k8s-templates', filename)) as f:
-                template = Template(f.read())
-                out = template.substitute(image=remote_container_name,
-                                          app=app_name, run=str(uuid.uuid4()))
-
-                with open(os.path.join('k8s', filename), 'w') as f:
-                    f.write(out)
-
-            kubernetes_helpers.ensure_namespace_exists(namespace)
-            process_helpers.run(
-                ["kubectl", "--namespace", namespace, "apply", "-R",
-                 "-f", "k8s"])
-
-            print("\nInspect created objects by running:\n"
-                  "$ kubectl get --namespace={} all\n".format(namespace))
+        self._deploy_new_container()
+        if self.args['--debug']:
+            process_helpers.run_popen(KUBE_DEBUG, shell=True)
+        if self.args['--interactive']:
+            # check if --debug has been ran before
+            process_helpers.run_popen("ssh -A root@127.0.0.1", shell=True)
 
     def _push(self):
         last_push_duration = files.fetch_action_arg(
@@ -117,3 +99,28 @@ class DeployCommand(Command):
     def _tag(self):
         process_helpers.run(
             ["docker", "tag", self.container_name, self.remote_container_name])
+
+    def _deploy_new_container(self):
+        app_name = self.config['name']
+        namespace = self.config['namespace']
+        remote_container_name = files.fetch_action_arg(
+            'push', 'last_remote_container')
+
+        print("Deploying {}".format(remote_container_name))
+
+        for filename in os.listdir("k8s-templates"):
+            with open(os.path.join('k8s-templates', filename)) as f:
+                template = Template(f.read())
+                out = template.substitute(image=remote_container_name,
+                                          app=app_name, run=str(uuid.uuid4()))
+
+                with open(os.path.join('k8s', filename), 'w') as f:
+                    f.write(out)
+
+            kubernetes_helpers.ensure_namespace_exists(namespace)
+            process_helpers.run(
+                ["kubectl", "--namespace", namespace, "apply", "-R",
+                 "-f", "k8s"])
+
+            print("\nInspect created objects by running:\n"
+                  "$ kubectl get --namespace={} all\n".format(namespace))

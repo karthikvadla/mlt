@@ -31,7 +31,7 @@ setup(name='mlt',
           'console_scripts': ['mlt=mlt.main:main']
       },
       package_data={
-          'mlt': ['../mlt-templates']
+          'mlt': ['mlt-templates', 'mlt/scripts/kube_debug.sh']
       },
       include_package_data=True,
       classifiers=['Development Status :: 3 - Alpha',
