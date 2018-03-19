@@ -18,9 +18,6 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-# TODO: dynamically specify which debug tools user wants installed
-# when they do a `mlt deploy --debug`
-
 """mlt.
 Usage:
   mlt (-h | --help)
@@ -28,7 +25,7 @@ Usage:
   mlt init [--template=<template> --template-repo=<repo>]
       [--registry=<registry> --namespace=<namespace] <name>
   mlt build [--watch]
-  mlt deploy [--no-push --debug --interactive]
+  mlt deploy [--no-push --interactive]
   mlt undeploy
   mlt (template | templates) list [--template-repo=<repo>]
 
@@ -45,18 +42,8 @@ Options:
   --watch                 Watch project directory and build on file changes.
   --no-push               Deploy your project to kubernetes using the same
                           image from your last run.
-  --debug                 Monkeypatches your deployed job into debug mode.
-                          Deployment command becomes effectively
-                          `sleep infinity & wait`. Your public key and
-                          known_hosts are copied into the container. SSH is
-                          installed, `whoami` user is created (helps with
-                          syncing code), rsync and vim are installed, and your
-                          deployment environment is copied into the root user's
-                          environment so sshing in becomes the same env as a
-                          `kubectl exec`.
-  --interactive           Launches you into an ssh connection with your job.
-                          Requires `--debug` to have happened, so will trigger
-                          a `--debug` call if none has happened yet.
+  --interactive           Rewrites container command to infinite sleep,
+                          and then drops user into `kubectl exec` shell
 """
 from docopt import docopt
 

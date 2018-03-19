@@ -45,11 +45,8 @@ class DeployCommand(Command):
         else:
             self._push()
         self._deploy_new_container()
-        if self.args['--debug']:
-            process_helpers.run_popen(KUBE_DEBUG, shell=True).communicate()
         if self.args['--interactive']:
-            # check if --debug has been ran before
-            process_helpers.run_popen("ssh -A root@127.0.0.1", shell=True)
+            process_helpers.run([KUBE_DEBUG])
 
     def _push(self):
         last_push_duration = files.fetch_action_arg(
