@@ -131,6 +131,9 @@ class DeployCommand(Command):
             print("\nInspect created objects by running:\n"
                   "$ kubectl get --namespace={} all\n".format(namespace))
 
+        # we can't yield many times inside of contextmanagers so for now this
+        # lives here. After everything is deployed we'll make a kubectl exec
+        # call into our debug container
         if self.args["--interactive"]:
             # wait til pod comes up
             tries = 0
