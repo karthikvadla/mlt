@@ -179,6 +179,7 @@ class DeployCommand(Command):
 
     def _exec_into_pod(self, podname):
         """wait til pod comes up and then exec into it"""
+        print("Connecting to pod...")
         tries = 0
         while True:
             pod = json.loads(process_helpers.run_popen(
