@@ -33,8 +33,9 @@ def run(command, cwd=None):
 
 
 def run_popen(command, shell=False, stdout=PIPE, stderr=PIPE):
-    """to suppress any output, pass falsy to stdout or stderr"""
+    """to suppress output, pass False to stdout or stderr
+       None is a valid option that we want to allow"""
     with open(os.devnull, 'w') as quiet:
-        stdout = stdout or quiet
-        stderr = stderr or quiet
+        stdout = quiet if stdout is False else stdout
+        stderr = quiet if stderr is False else stderr
         return Popen(command, stdout=stdout, stderr=stderr, shell=shell)

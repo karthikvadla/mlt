@@ -17,17 +17,18 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 #
-
-import os
+from conditional import conditional
+from contextlib import contextmanager
 import json
+import os
+import sys
 import time
 import uuid
-import sys
+import yaml
 from string import Template
 from subprocess import Popen, PIPE
 from termcolor import colored
 
-from mlt import KUBE_DEBUG
 from mlt.commands import Command
 from mlt.utils import (build_helpers, config_helpers, files,
                        kubernetes_helpers, progress_bar, process_helpers)
@@ -45,8 +46,6 @@ class DeployCommand(Command):
         else:
             self._push()
         self._deploy_new_container()
-        if self.args['--interactive']:
-            process_helpers.run([KUBE_DEBUG])
 
     def _push(self):
         last_push_duration = files.fetch_action_arg(
@@ -98,26 +97,95 @@ class DeployCommand(Command):
             ["docker", "tag", self.container_name, self.remote_container_name])
 
     def _deploy_new_container(self):
+        """Substitutes image, app, run data into k8s-template selected.
+           Can also launch user into interactive shell with --interactive flag
+        """
         app_name = self.config['name']
         namespace = self.config['namespace']
         remote_container_name = files.fetch_action_arg(
             'push', 'last_remote_container')
 
         print("Deploying {}".format(remote_container_name))
+        kubernetes_helpers.ensure_namespace_exists(namespace)
 
-        for filename in os.listdir("k8s-templates"):
-            with open(os.path.join('k8s-templates', filename)) as f:
-                template = Template(f.read())
-                out = template.substitute(image=remote_container_name,
-                                          app=app_name, run=str(uuid.uuid4()))
+        for path, dirs, filenames in os.walk("k8s-templates"):
+            self.file_count = len(filenames)
+            for filename in filenames:
+                with open(os.path.join(path, filename)) as f:
+                    template = Template(f.read())
+                out = template.substitute(
+                    image=remote_container_name,
+                    app=app_name, run=str(uuid.uuid4()))
 
-                with open(os.path.join('k8s', filename), 'w') as f:
-                    f.write(out)
-
-            kubernetes_helpers.ensure_namespace_exists(namespace)
-            process_helpers.run(
-                ["kubectl", "--namespace", namespace, "apply", "-R",
-                 "-f", "k8s"])
+                # sometimes we want to deploy interactively, but we always
+                # want to do the below stuff for a regular deploy regardless
+                with conditional(self.args["--interactive"],
+                                 self._deploy_interactively(out, filename)) \
+                        as out:
+                    with open(os.path.join('k8s', filename), 'w') as f:
+                        f.write(out)
+                    process_helpers.run(
+                        ["kubectl", "--namespace", namespace, "apply", "-R",
+                         "-f", "k8s"])
 
             print("\nInspect created objects by running:\n"
                   "$ kubectl get --namespace={} all\n".format(namespace))
+
+        if self.args["--interactive"]:
+            # wait til pod comes up
+            tries = 0
+            while True:
+                pod = json.loads(process_helpers.run_popen(
+                    "kubectl get pods {} -o json".format(
+                        self.interactive_deploy_podname),
+                    shell=True).stdout.read())
+                if pod['status']['phase'] == 'Running':
+                    break
+                if tries == 5:
+                    raise ValueError("Pod {} not Running".format(
+                        self.interactive_deploy_podname))
+                tries += 1
+                time.sleep(1)
+            process_helpers.run_popen(
+                ["kubectl", "exec", "-it", self.interactive_deploy_podname,
+                 "/bin/bash"], stdout=None, stderr=None).wait()
+
+    @contextmanager
+    def _deploy_interactively(self, data, filename):
+        """Makes template command become `sleep infinity`
+           and keep track of the pod we want to exec into when all things
+           have deployed.
+           Right now we support just one interactive deploy
+           default to only file in template dir if possible
+           keep track of which pod we want to connect to
+        """
+        interactive_deploy = False
+        if self.file_count == 1 or \
+                self.args["<kube_spec>"] == filename:
+            data = self._patch_template_spec(data)
+            interactive_deploy = True
+
+        # do regular deploy things here
+        yield data
+
+        # don't know of a better way to do this; grab the pod created
+        # by the job we just deployed
+        # this gets the most recent pod by name, so we can exec into it
+        # once everything is done deploying
+        if interactive_deploy:
+            self.interactive_deploy_podname = process_helpers.run_popen(
+                "kubectl get pods --sort-by=.status.startTime " +
+                "| awk 'END{print $1}'", shell=True).stdout.read().strip()
+
+    def _patch_template_spec(self, data):
+        """Makes `command` of template yaml `sleep infinity`.
+           We will also add a `debug=true` label onto this pod for easy
+           discovery later
+        """
+        data = yaml.load(data)
+        data['spec']['template']['metadata'] = {'labels': {'debug': 'true'}}
+        data['spec']['template']['spec']['containers'][0].update(
+            {'command':
+             ["/bin/bash", "-c",
+              "trap : TERM INT; sleep infinity & wait"]})
+        return json.dumps(data)

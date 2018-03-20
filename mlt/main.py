@@ -25,28 +25,32 @@ Usage:
   mlt init [--template=<template> --template-repo=<repo>]
       [--registry=<registry> --namespace=<namespace] <name>
   mlt build [--watch]
-  mlt deploy [--no-push --interactive]
+  mlt deploy [--no-push] [-i | --interactive] [<kube_spec>]
   mlt undeploy
   mlt (template | templates) list [--template-repo=<repo>]
 
 Options:
-  --template=<template>   Template name for app
-                          initialization [default: hello-world].
-  --template-repo=<repo>  Git URL of template repository.
-                          [default: git@github.com:NervanaSystems/mlt.git]
-  --registry=<registry>   Container registry to use.
-                          If none is set, will attempt to use gcloud.
-  --namespace=<namespace> Kubernetes Namespace to use.
-                          If none is set, will attempt to create or
-                          use a namespace identical to username.
-  --watch                 Watch project directory and build on file changes.
-  --no-push               Deploy your project to kubernetes using the same
-                          image from your last run.
-  --interactive           Rewrites container command to infinite sleep,
-                          and then drops user into `kubectl exec` shell
+  --template=<template>       Template name for app
+                              initialization [default: hello-world].
+  --template-repo=<repo>      Git URL of template repository.
+                              [default: git@github.com:NervanaSystems/mlt.git]
+  --registry=<registry>       Container registry to use.
+                              If none is set, will attempt to use gcloud.
+  --namespace=<namespace>     Kubernetes Namespace to use.
+                              If none is set, will attempt to create or
+                              use a namespace identical to username.
+  --interactive               Rewrites container command to infinite sleep,
+                              and then drops user into `kubectl exec` shell.
+                              Adds a `debug=true` label for easy discovery
+                              later. If you have more than 1 template yaml,
+                              specify which file you'd like to deploy
+                              interactively as the `kube_spec`. `kube_spec` is
+                              only used with this flag.
+  --watch                     Watch project directory and build on file changes
+  --no-push                   Deploy your project to kubernetes using the same
+                              image from your last run.
 """
 from docopt import docopt
-
 from mlt.commands import (BuildCommand, DeployCommand, InitCommand,
                           TemplatesCommand, UndeployCommand)
 
@@ -74,4 +78,7 @@ def main():
     # docker requires repo name to be in lowercase
     if args["<name>"]:
         args["<name>"] = args["<name>"].lower()
+    # -i is an alias, so ensure that we only have to do logic on --interactive
+    if args["-i"]:
+        args["--interactive"] = True
     run_command(args)

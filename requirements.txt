@@ -1,6 +1,8 @@
+conditional
 docopt
 watchdog
 progressbar2
 termcolor
 tabulate
+PyYAML
 .
