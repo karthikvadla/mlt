@@ -48,7 +48,8 @@ def test_deploy_gce(listdir_mock, progress_bar, popen_mock, open_mock,
     deploy.config = {
         'gceProject': 'gcr://tacoprojectbestproject',
         'name': 'besttacoapp',
-        'namespace': 'besttaconamespace'
+        'namespace': 'besttaconamespace',
+        '--interactive': False
     }
     fetch_action_arg.return_value = 'output'
 
@@ -87,7 +88,8 @@ def test_deploy_docker(listdir_mock, progress_bar, popen_mock, open_mock,
     deploy.config = {
         'registry': 'dockerhub',
         'name': 'besttacoapp',
-        'namespace': 'besttaconamespace'
+        'namespace': 'besttaconamespace',
+        '--interactive': False
     }
     fetch_action_arg.return_value = 'output'
 
@@ -126,7 +128,8 @@ def test_deploy_without_push(listdir_mock, progress_bar, popen_mock, open_mock,
     deploy.config = {
         'gceProject': 'gcr://projectfoo',
         'name': 'foo',
-        'namespace': 'foo'
+        'namespace': 'foo',
+        '--interactive': False
     }
     fetch_action_arg.return_value = 'output'
 

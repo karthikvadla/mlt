@@ -135,23 +135,7 @@ class DeployCommand(Command):
         # lives here. After everything is deployed we'll make a kubectl exec
         # call into our debug container
         if self.args["--interactive"]:
-            # wait til pod comes up
-            tries = 0
-            while True:
-                pod = json.loads(process_helpers.run_popen(
-                    "kubectl get pods {} -o json".format(
-                        self.interactive_deploy_podname),
-                    shell=True).stdout.read())
-                if pod['status']['phase'] == 'Running':
-                    break
-                if tries == 5:
-                    raise ValueError("Pod {} not Running".format(
-                        self.interactive_deploy_podname))
-                tries += 1
-                time.sleep(1)
-            process_helpers.run_popen(
-                ["kubectl", "exec", "-it", self.interactive_deploy_podname,
-                 "/bin/bash"], stdout=None, stderr=None).wait()
+            self._exec_into_pod(self.interactive_deploy_podname)
 
     @contextmanager
     def _deploy_interactively(self, data, filename):
@@ -192,3 +176,20 @@ class DeployCommand(Command):
              ["/bin/bash", "-c",
               "trap : TERM INT; sleep infinity & wait"]})
         return json.dumps(data)
+
+    def _exec_into_pod(self, podname):
+        """wait til pod comes up and then exec into it"""
+        tries = 0
+        while True:
+            pod = json.loads(process_helpers.run_popen(
+                "kubectl get pods {} -o json".format(
+                    podname), shell=True).stdout.read())
+            if pod['status']['phase'] == 'Running':
+                break
+            if tries == 5:
+                raise ValueError("Pod {} not Running".format(podname))
+            tries += 1
+            time.sleep(1)
+        process_helpers.run_popen(
+            ["kubectl", "exec", "-it", podname,
+             "/bin/bash"], stdout=None, stderr=None).wait()
