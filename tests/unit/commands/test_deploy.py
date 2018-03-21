@@ -35,11 +35,11 @@ from test_utils.io import catch_stdout
 @patch('mlt.commands.deploy.open')
 @patch('mlt.commands.deploy.Popen')
 @patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.listdir')
-def test_deploy_gce(listdir_mock, progress_bar, popen_mock, open_mock,
+@patch('mlt.commands.deploy.os.walk')
+def test_deploy_gce(walk_mock, progress_bar, popen_mock, open_mock,
                     template, kube_helpers, process_helpers, verify_build,
                     verify_init, fetch_action_arg):
-    listdir_mock.return_value = ['besttacofile', 'besttrumpetfile']
+    walk_mock.return_value = ['foo', 'bar']
     progress_bar.duration_progress.side_effect = \
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
@@ -75,11 +75,11 @@ def test_deploy_gce(listdir_mock, progress_bar, popen_mock, open_mock,
 @patch('mlt.commands.deploy.open')
 @patch('mlt.commands.deploy.Popen')
 @patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.listdir')
-def test_deploy_docker(listdir_mock, progress_bar, popen_mock, open_mock,
+@patch('mlt.commands.deploy.os.walk')
+def test_deploy_docker(walk_mock, progress_bar, popen_mock, open_mock,
                        template, kube_helpers, process_helpers, verify_build,
                        verify_init, fetch_action_arg):
-    listdir_mock.return_value = ['besttacofile', 'besttrumpetfile']
+    walk_mock.return_value = ['foo', 'bar']
     progress_bar.duration_progress.side_effect = \
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
@@ -115,11 +115,11 @@ def test_deploy_docker(listdir_mock, progress_bar, popen_mock, open_mock,
 @patch('mlt.commands.deploy.open')
 @patch('mlt.commands.deploy.Popen')
 @patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.listdir')
-def test_deploy_without_push(listdir_mock, progress_bar, popen_mock, open_mock,
+@patch('mlt.commands.deploy.os.walk')
+def test_deploy_without_push(walk_mock, progress_bar, popen_mock, open_mock,
                              template, kube_helpers, process_helpers,
                              verify_build, verify_init, fetch_action_arg):
-    listdir_mock.return_value = ['foo', 'bar']
+    walk_mock.return_value = ['foo', 'bar']
     progress_bar.duration_progress.side_effect = \
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
