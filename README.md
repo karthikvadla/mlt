@@ -35,8 +35,9 @@ Installation:
 $ make
 # Two different options to running `mlt`:
 $ source ./.venv/bin/activate
-# add this to ~/.bash_profile, ~/.bashrc, etc and then source it
+# add this to ~/.bash_profile, ~/.bashrc, etc and then source it for python2 and python3
 alias mlt='{path_to_mlt_repo}/.venv/bin/mlt'
+alias mlt3='{path_to_mlt_repo}/.venv3/bin/mlt'
 ```
 
 ## Usage summary

@@ -162,7 +162,8 @@ class DeployCommand(Command):
         if interactive_deploy:
             self.interactive_deploy_podname = process_helpers.run_popen(
                 "kubectl get pods --sort-by=.status.startTime " +
-                "| awk 'END{print $1}'", shell=True).stdout.read().strip()
+                "| awk 'END{print $1}'", shell=True).stdout.read().decode(
+                'utf-8').strip()
 
     def _patch_template_spec(self, data):
         """Makes `command` of template yaml `sleep infinity`.
@@ -184,9 +185,12 @@ class DeployCommand(Command):
         print("Connecting to pod...")
         tries = 0
         while True:
-            pod = json.loads(process_helpers.run_popen(
+            pod = process_helpers.run_popen(
                 "kubectl get pods {} -o json".format(
-                    podname), shell=True).stdout.read())
+                    podname), shell=True).stdout.read().decode('utf-8')
+            if not pod:
+                continue
+            pod = json.loads(pod)
             if pod['status']['phase'] == 'Running':
                 break
             if tries == 5:
