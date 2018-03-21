@@ -21,7 +21,7 @@
 import pytest
 from mock import MagicMock, patch
 
-from mlt.main import run_command
+from mlt.main import main, run_command
 
 """
 All these tests assert that given a command arg from docopt we call
@@ -38,3 +38,21 @@ def test_run_command(command):
             as COMMAND_MAP:
         run_command({command: True})
         COMMAND_MAP[0][1].return_value.action.assert_called_once()
+
+
+@patch('mlt.main.docopt')
+@patch('mlt.main.run_command')
+def test_main_name_capitalized(run_command, docopt):
+    docopt.return_value = {'<name>': 'Capitalized_Name', '-i': False}
+    main()
+    run_command.assert_called_with(
+        {'<name>': 'capitalized_name', '-i': False})
+
+
+@patch('mlt.main.docopt')
+@patch('mlt.main.run_command')
+def test_main_name_interactive(run_command, docopt):
+    docopt.return_value = {'-i': True, '<name>': 'foo'}
+    main()
+    run_command.assert_called_with(
+        {'-i': True, '--interactive': True, '<name>': 'foo'})
