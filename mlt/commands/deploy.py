@@ -167,7 +167,9 @@ class DeployCommand(Command):
     def _patch_template_spec(self, data):
         """Makes `command` of template yaml `sleep infinity`.
            We will also add a `debug=true` label onto this pod for easy
-           discovery later
+           discovery later.
+           # NOTE: for now we only support basic functionality. Only 1
+           container in a deployment for now.
         """
         data = yaml.load(data)
         data['spec']['template']['metadata'] = {'labels': {'debug': 'true'}}

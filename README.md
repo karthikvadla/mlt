@@ -74,4 +74,17 @@ Deploying gcr.io/my-project-12345/my-app:71fb176d-28a9-46c2-ab51-fe3d4a88b02c
 
 Inspect created objects by running:
   $ kubectl get --namespace=my-app all
+
+### To deploy in interactive mode (using no-push as an example)
+### NOTE: only basic functionality is supported at this time. Only one container and one pod in a deployment for now.
+$ mlt deploy -i --no-push
+Skipping image push
+Deploying localhost:5000/test:d6c9c06b-2b64-4038-a6a9-434bf90d6acc
+
+Inspect created objects by running:
+$ kubectl get --namespace=robertso all
+
+Connecting to pod...
+root@test-9e035719-1d8b-4e0c-adcb-f706429ffeac-wl42v:/src/app# ls
+Dockerfile  Makefile  README.md  k8s  k8s-templates  main.py  mlt.json	requirements.txt
 ```
