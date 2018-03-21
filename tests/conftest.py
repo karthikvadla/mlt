@@ -63,11 +63,17 @@ def patch_setattr(module_names, module_replace, monkeypatch, path, m):
         fn = os.path.splitext(os.path.relpath(fn))[0]
         module = fn.replace(os.path.sep, '.').replace('test_', '').replace(
             *module_replace)
-        pytest.set_trace()
         try:
             monkeypatch.setattr('.'.join((module, path)), m)
         except AttributeError:
             # handle mocking builtins like `open`
+            if sys.version_info.major == 3:
+                builtin = 'builtins'
+            else:
+                builtin = '__builtin__'
+            # NOTE: `path` should be just the builtin, like `open`
+            # usage: patch('open')
+            monkeypatch.setattr("{}.{}".format(builtin, path), m)
 
 
 @pytest.fixture
