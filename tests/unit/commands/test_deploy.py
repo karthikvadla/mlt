@@ -19,23 +19,63 @@
 #
 
 from __future__ import print_function
-
-from mock import patch, MagicMock
+import pytest
+from mock import MagicMock
 
 from mlt.commands.deploy import DeployCommand
 from test_utils.io import catch_stdout
 
 
-@patch('mlt.commands.deploy.files.fetch_action_arg')
-@patch('mlt.commands.deploy.config_helpers.load_config')
-@patch('mlt.commands.deploy.build_helpers.verify_build')
-@patch('mlt.commands.deploy.process_helpers')
-@patch('mlt.commands.deploy.kubernetes_helpers')
-@patch('mlt.commands.deploy.Template')
-@patch('mlt.commands.deploy.open')
-@patch('mlt.commands.deploy.Popen')
-@patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.walk')
+@pytest.fixture(autouse=True)
+def fetch_action_arg(patch):
+    return patch('files.fetch_action_arg')
+
+
+@pytest.fixture(autouse=True)
+def kube_helpers(patch):
+    return patch('kubernetes_helpers')
+
+
+@pytest.fixture(autouse=True)
+def open_mock(patch):
+    return patch('open')
+
+
+@pytest.fixture(autouse=True)
+def popen_mock(patch):
+    return patch('Popen')
+
+
+@pytest.fixture(autouse=True)
+def process_helpers(patch):
+    return patch('process_helpers')
+
+
+@pytest.fixture(autouse=True)
+def progress_bar(patch):
+    return patch('progress_bar')
+
+
+@pytest.fixture(autouse=True)
+def template(patch):
+    return patch('Template')
+
+
+@pytest.fixture(autouse=True)
+def verify_build(patch):
+    return patch('build_helpers.verify_build')
+
+
+@pytest.fixture(autouse=True)
+def verify_init(patch):
+    return patch('config_helpers.load_config')
+
+
+@pytest.fixture(autouse=True)
+def walk_mock(patch):
+    return patch('os.walk')
+
+
 def test_deploy_gce(walk_mock, progress_bar, popen_mock, open_mock,
                     template, kube_helpers, process_helpers, verify_build,
                     verify_init, fetch_action_arg):
@@ -66,16 +106,6 @@ def test_deploy_gce(walk_mock, progress_bar, popen_mock, open_mock,
     assert deploying < inspecting, pushing < pushed
 
 
-@patch('mlt.commands.deploy.files.fetch_action_arg')
-@patch('mlt.commands.deploy.config_helpers.load_config')
-@patch('mlt.commands.deploy.build_helpers.verify_build')
-@patch('mlt.commands.deploy.process_helpers')
-@patch('mlt.commands.deploy.kubernetes_helpers')
-@patch('mlt.commands.deploy.Template')
-@patch('mlt.commands.deploy.open')
-@patch('mlt.commands.deploy.Popen')
-@patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.walk')
 def test_deploy_docker(walk_mock, progress_bar, popen_mock, open_mock,
                        template, kube_helpers, process_helpers, verify_build,
                        verify_init, fetch_action_arg):
@@ -106,16 +136,6 @@ def test_deploy_docker(walk_mock, progress_bar, popen_mock, open_mock,
     assert deploying < inspecting, pushing < pushed
 
 
-@patch('mlt.commands.deploy.files.fetch_action_arg')
-@patch('mlt.commands.deploy.config_helpers.load_config')
-@patch('mlt.commands.deploy.build_helpers.verify_build')
-@patch('mlt.commands.deploy.process_helpers')
-@patch('mlt.commands.deploy.kubernetes_helpers')
-@patch('mlt.commands.deploy.Template')
-@patch('mlt.commands.deploy.open')
-@patch('mlt.commands.deploy.Popen')
-@patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.walk')
 def test_deploy_without_push(walk_mock, progress_bar, popen_mock, open_mock,
                              template, kube_helpers, process_helpers,
                              verify_build, verify_init, fetch_action_arg):
