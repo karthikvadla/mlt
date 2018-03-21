@@ -44,12 +44,12 @@ def test_deploy_gce(listdir_mock, progress_bar, popen_mock, open_mock,
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
 
-    deploy = DeployCommand({'deploy': True, '--no-push': False})
+    deploy = DeployCommand(
+        {'deploy': True, '--no-push': False, '--interactive': False})
     deploy.config = {
         'gceProject': 'gcr://tacoprojectbestproject',
         'name': 'besttacoapp',
-        'namespace': 'besttaconamespace',
-        '--interactive': False
+        'namespace': 'besttaconamespace'
     }
     fetch_action_arg.return_value = 'output'
 
@@ -84,12 +84,12 @@ def test_deploy_docker(listdir_mock, progress_bar, popen_mock, open_mock,
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
 
-    deploy = DeployCommand({'deploy': True, '--no-push': False})
+    deploy = DeployCommand(
+        {'deploy': True, '--no-push': False, '--interactive': False})
     deploy.config = {
         'registry': 'dockerhub',
         'name': 'besttacoapp',
-        'namespace': 'besttaconamespace',
-        '--interactive': False
+        'namespace': 'besttaconamespace'
     }
     fetch_action_arg.return_value = 'output'
 
@@ -124,12 +124,12 @@ def test_deploy_without_push(listdir_mock, progress_bar, popen_mock, open_mock,
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
 
-    deploy = DeployCommand({'deploy': True, '--no-push': True})
+    deploy = DeployCommand(
+        {'deploy': True, '--no-push': True, '--interactive': False})
     deploy.config = {
         'gceProject': 'gcr://projectfoo',
         'name': 'foo',
-        'namespace': 'foo',
-        '--interactive': False
+        'namespace': 'foo'
     }
     fetch_action_arg.return_value = 'output'
 
