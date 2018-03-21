@@ -48,14 +48,6 @@ def patch_setattr(module_names, module_replace, monkeypatch, path, m):
     elif any(path.startswith(i+'.') for i in module_names):
         # full path.  OK.
         monkeypatch.setattr(path, m)
-        # try:
-        #     monkeypatch.setattr(path, m)
-        # except AttributeError:
-        #     # this will fix builtins like mocking `open`
-        #     print(monkeypatch)
-        #     print(path, m)
-        #     print('*' * 80)
-        #     A
     else:
         # assume we're patching stuff in the file the test file is supposed to
         # be testing
