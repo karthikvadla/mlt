@@ -27,6 +27,16 @@ setup(name='mlt',
       author_email='intelnervana@intel.com',
       url='http://www.intelnervana.com',
       packages=find_packages(exclude=["tests"]),
+      install_requires=[
+          'pip>=9.0.1',
+          'conditional>=1.2',
+          'docopt>=0.6.2',
+          'progressbar2>=3.36.0',
+          'tabulate>=0.8.2',
+          'termcolor>=1.1.0',
+          'PyYAML>=3.12',
+          'watchdog>=0.8.3'
+      ],
       entry_points={
           'console_scripts': ['mlt=mlt.main:main']
       },

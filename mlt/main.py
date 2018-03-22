@@ -33,7 +33,7 @@ Options:
   --template=<template>       Template name for app
                               initialization [default: hello-world].
   --template-repo=<repo>      Git URL of template repository.
-                              [default: git@github.com:NervanaSystems/mlt.git]
+                              [default: git@github.com:IntelAI/mlt.git]
   --registry=<registry>       Container registry to use.
                               If none is set, will attempt to use gcloud.
   --namespace=<namespace>     Kubernetes Namespace to use.

@@ -41,6 +41,14 @@ coverage:
 	@echo "Running coverage report..."
 	@tox -e py2-coverage -e py3-coverage
 
+install:
+	@echo "Installing mlt to system..."
+	@python setup.py install
+
+uninstall:
+	@echo "Uninstalling mlt from system..."
+	@python setup.py uninstall
+
 docker:
 	docker build \
         --build-arg HTTP_PROXY=${HTTP_PROXY} \
