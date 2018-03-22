@@ -22,10 +22,37 @@ from test_utils.files import create_work_dir
 from test_utils.e2e_commands import CommandTester
 
 
-def test_simple_flow():
+def test_simple_deploy():
     with create_work_dir() as workdir:
         commands = CommandTester(workdir)
         commands.init()
         commands.build()
         commands.deploy()
+        commands.undeploy()
+
+
+def test_no_push_deploy():
+    with create_work_dir() as workdir:
+        commands = CommandTester(workdir)
+        commands.init()
+        commands.build()
+        commands.deploy(no_push=True)
+        commands.undeploy()
+
+
+def test_watch_build_and_deploy_no_push():
+    with create_work_dir() as workdir:
+        commands = CommandTester(workdir)
+        commands.init()
+        commands.build(watch=True)
+        commands.deploy(no_push=True)
+        commands.undeploy()
+
+
+def test_interactive_deploy():
+    with create_work_dir() as workdir:
+        commands = CommandTester(workdir)
+        commands.init()
+        commands.build()
+        commands.deploy(no_push=True, interactive=True)
         commands.undeploy()

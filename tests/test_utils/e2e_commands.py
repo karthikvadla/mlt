@@ -65,8 +65,11 @@ class CommandTester(object):
             "git --git-dir={}/.git --work-tree={} status".format(
                 self.project_dir, self.project_dir).split())
 
-    def build(self):
-        p = Popen(['mlt', 'build'], cwd=self.project_dir)
+    def build(self, watch=False):
+        build_cmd = ['mlt', 'build']
+        if watch:
+            build_cmd.append('--watch')
+        p = Popen(build_cmd, cwd=self.project_dir)
         assert p.wait() == 0
         assert os.path.isfile(self.build_json)
         with open(self.build_json) as f:
@@ -79,8 +82,13 @@ class CommandTester(object):
                 shell=True
             ).wait() == 0
 
-    def deploy(self):
-        p = Popen(['mlt', 'deploy'], cwd=self.project_dir)
+    def deploy(self, no_push=False, interactive=False):
+        deploy_cmd = ['mlt', 'deploy']
+        if no_push:
+            deploy_cmd.append('--no-push')
+        if interactive:
+            deploy_cmd.append('--interactive')
+        p = Popen(deploy_cmd, cwd=self.project_dir)
         out, err = p.communicate()
         assert p.wait() == 0
         assert os.path.isfile(self.deploy_json)
