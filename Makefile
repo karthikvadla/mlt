@@ -71,6 +71,9 @@ test-e2e: env-up
 	docker-compose exec test pip install tox
 	docker-compose exec test tox -e py2-e2e -e py3-e2e
 
+test-e2e-no-docker:
+	@tox -e py2-e2e -e py3-e2e
+
 clean:
 	rm -rf .venv .venv3
 	find . -name '*.pyc' -delete

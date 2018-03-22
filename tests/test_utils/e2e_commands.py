@@ -38,6 +38,7 @@ class CommandTester(object):
     def __init__(self, workdir):
         # just in case tests fail, want a clean namespace always
         self.workdir = workdir
+        self.registry = os.getenv('MLT_REGISTRY', 'localhost:5000')
         self.app_name = str(uuid.uuid4())[:10]
         self.namespace = getpass.getuser() + '-' + self.app_name
 
@@ -48,7 +49,7 @@ class CommandTester(object):
 
     def init(self):
         p = Popen(
-            ['mlt', 'init', '--registry=localhost:5000',
+            ['mlt', 'init', '--registry={}'.format(self.registry),
              '--template-repo={}'.format(basedir()),
              '--namespace={}'.format(self.namespace), self.app_name],
             cwd=self.workdir)
@@ -58,7 +59,7 @@ class CommandTester(object):
             assert json.loads(f.read()) == {
                 'namespace': self.namespace,
                 'name': self.app_name,
-                'registry': 'localhost:5000'
+                'registry': self.registry
             }
         # verify we created a git repo with our project init
         assert "On branch master" in run(
@@ -68,7 +69,7 @@ class CommandTester(object):
     def build(self, watch=False):
         build_cmd = ['mlt', 'build']
         if watch:
-            build_cmd.append('--watch')
+            build_cmd.append('--watch &')
         p = Popen(build_cmd, cwd=self.project_dir)
         assert p.wait() == 0
         assert os.path.isfile(self.build_json)
