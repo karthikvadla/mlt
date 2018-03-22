@@ -18,19 +18,14 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from contextlib import contextmanager
-from mlt.utils import process_helpers
-import shutil
-import tempfile
+from test_utils.files import create_work_dir
+from test_utils.e2e_commands import CommandTester
 
 
-@contextmanager
-def clone_repo(repo):
-    destination = tempfile.mkdtemp()
-    process_helpers.run_popen(
-        "git clone {} {}".format(repo, destination),
-        shell=True, stdout=False, stderr=False).wait()
-    try:
-        yield destination
-    finally:
-        shutil.rmtree(destination)
+def test_simple_flow():
+    with create_work_dir() as workdir:
+        commands = CommandTester(workdir)
+        commands.init()
+        commands.build()
+        commands.deploy()
+        commands.undeploy()
