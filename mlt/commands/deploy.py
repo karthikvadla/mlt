@@ -121,7 +121,10 @@ class DeployCommand(Command):
                 # want to do the below stuff for a regular deploy regardless
                 with conditional(self.args["--interactive"],
                                  self._deploy_interactively(out, filename)) \
-                        as out:
+                        as out_modified:
+                    # conditional will make out_modified None if
+                    # not running interactive mode
+                    out = out or out_modified
                     with open(os.path.join('k8s', filename), 'w') as f:
                         f.write(out)
                     process_helpers.run(
