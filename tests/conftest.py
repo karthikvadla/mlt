@@ -70,7 +70,11 @@ def patch_setattr(module_names, module_replace, monkeypatch, path, m):
 
 @pytest.fixture
 def patch(monkeypatch):
-    """allows us to add easy autouse fixtures by patching anything we want"""
+    """allows us to add easy autouse fixtures by patching anything we want
+       Usage: return something like this in a @pytest.fixture
+       - patch('files.fetch_action_arg', MagicMock(return_value='output'))
+       Without the second arg, will default to just MagicMock()
+    """
     def wrapper(path, mock=None):
         m = mock if mock is not None else MagicMock()
         patch_setattr(MODULES, MODULES_REPLACE, monkeypatch, path, m)

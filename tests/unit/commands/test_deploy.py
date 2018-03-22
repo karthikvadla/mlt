@@ -28,7 +28,7 @@ from test_utils.io import catch_stdout
 
 @pytest.fixture(autouse=True)
 def fetch_action_arg(patch):
-    return patch('files.fetch_action_arg')
+    return patch('files.fetch_action_arg', MagicMock(return_value='output'))
 
 
 @pytest.fixture(autouse=True)
@@ -43,7 +43,9 @@ def open_mock(patch):
 
 @pytest.fixture(autouse=True)
 def popen_mock(patch):
-    return patch('Popen')
+    popen_mock = MagicMock()
+    popen_mock.return_value.poll.return_value = 0
+    return patch('Popen', popen_mock)
 
 
 @pytest.fixture(autouse=True)
@@ -53,7 +55,10 @@ def process_helpers(patch):
 
 @pytest.fixture(autouse=True)
 def progress_bar(patch):
-    return patch('progress_bar')
+    progress_mock = MagicMock()
+    progress_mock.duration_progress.side_effect = lambda x, y, z: print(
+        'Pushing ')
+    return patch('progress_bar', progress_mock)
 
 
 @pytest.fixture(autouse=True)
@@ -73,98 +78,65 @@ def verify_init(patch):
 
 @pytest.fixture(autouse=True)
 def walk_mock(patch):
-    return patch('os.walk')
+    return patch('os.walk', MagicMock(return_value=['foo', 'bar']))
+
+
+def deploy(no_push, interactive, extra_config_args):
+    deploy = DeployCommand(
+        {'deploy': True, '--no-push': no_push, '--interactive': interactive})
+    deploy.config = {'name': 'app', 'namespace': 'namespace'}
+    deploy.config.update(extra_config_args)
+
+    with catch_stdout() as caught_output:
+        deploy.action()
+        output = caught_output.getvalue()
+    return output
+
+
+def verify_successful_deploy(output, did_push=True):
+    """assert pushing, deploying, then objs created, then pushed"""
+    if did_push:
+        pushing = output.find('Pushing ')
+        pushed = output.find('Pushed to ')
+    else:
+        pushing = output.find('Skipping image push')
+        # setting pushed to infinity to keep test format
+        pushed = float('inf')
+    deploying = output.find('Deploying ')
+    inspecting = output.find('Inspect created objects by running:\n')
+
+    assert all(var >= 0 for var in (deploying, inspecting, pushing, pushed))
+    assert deploying < inspecting, pushing < pushed
+
+    if not did_push:
+        # we should not see pushing/pushed messages
+        pushing = output.find('Pushing ')
+        pushed = output.find('Pushed to ')
+        assert all(var == -1 for var in (pushing, pushed))
 
 
 def test_deploy_gce(walk_mock, progress_bar, popen_mock, open_mock,
                     template, kube_helpers, process_helpers, verify_build,
                     verify_init, fetch_action_arg):
-    walk_mock.return_value = ['foo', 'bar']
-    progress_bar.duration_progress.side_effect = \
-        lambda x, y, z: print('Pushing ')
-    popen_mock.return_value.poll.return_value = 0
-
-    deploy = DeployCommand(
-        {'deploy': True, '--no-push': False, '--interactive': False})
-    deploy.config = {
-        'gceProject': 'gcr://tacoprojectbestproject',
-        'name': 'besttacoapp',
-        'namespace': 'besttaconamespace'
-    }
-    fetch_action_arg.return_value = 'output'
-
-    with catch_stdout() as caught_output:
-        deploy.action()
-        output = caught_output.getvalue()
-
-    # assert pushing, deploying, then objs created, then pushed
-    pushing = output.find('Pushing ')
-    deploying = output.find('Deploying ')
-    inspecting = output.find('Inspect created objects by running:\n')
-    pushed = output.find('Pushed to ')
-    assert all(var >= 0 for var in (deploying, inspecting, pushing, pushed))
-    assert deploying < inspecting, pushing < pushed
+    output = deploy(
+        no_push=False, interactive=False,
+        extra_config_args={'gceProject': 'gcr://projectfoo'})
+    verify_successful_deploy(output)
 
 
 def test_deploy_docker(walk_mock, progress_bar, popen_mock, open_mock,
                        template, kube_helpers, process_helpers, verify_build,
                        verify_init, fetch_action_arg):
-    walk_mock.return_value = ['foo', 'bar']
-    progress_bar.duration_progress.side_effect = \
-        lambda x, y, z: print('Pushing ')
-    popen_mock.return_value.poll.return_value = 0
-
-    deploy = DeployCommand(
-        {'deploy': True, '--no-push': False, '--interactive': False})
-    deploy.config = {
-        'registry': 'dockerhub',
-        'name': 'besttacoapp',
-        'namespace': 'besttaconamespace'
-    }
-    fetch_action_arg.return_value = 'output'
-
-    with catch_stdout() as caught_output:
-        deploy.action()
-        output = caught_output.getvalue()
-
-    # assert pushing, deploying, then objs created, then pushed
-    pushing = output.find('Pushing ')
-    deploying = output.find('Deploying ')
-    inspecting = output.find('Inspect created objects by running:\n')
-    pushed = output.find('Pushed to ')
-    assert all(var >= 0 for var in (deploying, inspecting, pushing, pushed))
-    assert deploying < inspecting, pushing < pushed
+    output = deploy(
+        no_push=False, interactive=False,
+        extra_config_args={'registry': 'dockerhub'})
+    verify_successful_deploy(output)
 
 
 def test_deploy_without_push(walk_mock, progress_bar, popen_mock, open_mock,
                              template, kube_helpers, process_helpers,
                              verify_build, verify_init, fetch_action_arg):
-    walk_mock.return_value = ['foo', 'bar']
-    progress_bar.duration_progress.side_effect = \
-        lambda x, y, z: print('Pushing ')
-    popen_mock.return_value.poll.return_value = 0
-
-    deploy = DeployCommand(
-        {'deploy': True, '--no-push': True, '--interactive': False})
-    deploy.config = {
-        'gceProject': 'gcr://projectfoo',
-        'name': 'foo',
-        'namespace': 'foo'
-    }
-    fetch_action_arg.return_value = 'output'
-
-    with catch_stdout() as caught_output:
-        deploy.action()
-        output = caught_output.getvalue()
-
-    # assert pushing, deploying, then objs created, then pushed
-    skipping_push = output.find('Skipping image push')
-    deploying = output.find('Deploying ')
-    inspecting = output.find('Inspect created objects by running:\n')
-    assert all(var >= 0 for var in (deploying, inspecting, skipping_push))
-    assert skipping_push < deploying < inspecting
-
-    # we should not see pushing/pushed messages
-    pushing = output.find('Pushing ')
-    pushed = output.find('Pushed to ')
-    assert all(var == -1 for var in (pushing, pushed))
+    output = deploy(
+        no_push=True, interactive=False,
+        extra_config_args={'gceProject': 'gcr://projectfoo'})
+    verify_successful_deploy(output, did_push=False)
