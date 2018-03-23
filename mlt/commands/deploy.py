@@ -124,7 +124,7 @@ class DeployCommand(Command):
                         as out_modified:
                     # conditional will make out_modified None if
                     # not running interactive mode
-                    out = out or out_modified
+                    out = out_modified or out
                     with open(os.path.join('k8s', filename), 'w') as f:
                         f.write(out)
                     process_helpers.run(
