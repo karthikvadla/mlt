@@ -200,6 +200,7 @@ class DeployCommand(Command):
 
             # check if pod is in running state
             pod = json.loads(pod)
+            print(pod)
             # gcr stores an auth token which could be returned as part
             # of the pod json data
             if pod.get('items'):
