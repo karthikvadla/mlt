@@ -186,6 +186,7 @@ class DeployCommand(Command):
     def _exec_into_pod(self, podname, namespace):
         """wait til pod comes up and then exec into it"""
         print("Connecting to pod...")
+        # we will try 5 times, 1 sec between tries
         tries = 0
         while True:
             pod = process_helpers.run_popen(
@@ -194,13 +195,21 @@ class DeployCommand(Command):
                 shell=True).stdout.read().decode('utf-8')
             if not pod:
                 continue
+
+            # check if pod is in running state
             pod = json.loads(pod)
+            # gcr stores an auth token which could be returned as part
+            # of the pod json data
+            if pod.get('items'):
+                pod = pod['items'][0]
             if pod['status']['phase'] == 'Running':
                 break
+
             if tries == 5:
                 raise ValueError("Pod {} not Running".format(podname))
             tries += 1
             time.sleep(1)
+
         process_helpers.run_popen(
             ["kubectl", "exec", "-it", podname,
              "/bin/bash"], stdout=None, stderr=None).wait()
