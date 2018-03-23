@@ -165,8 +165,6 @@ class DeployCommand(Command):
         # this gets the most recent pod by name, so we can exec into it
         # once everything is done deploying
         if interactive_deploy:
-            # ensure that the pod will have started
-            time.sleep(2)
             self.interactive_deploy_podname = process_helpers.run_popen(
                 "kubectl get pods --namespace {} ".format(self.namespace) +
                 "--sort-by=.status.startTime " +
