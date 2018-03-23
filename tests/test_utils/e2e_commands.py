@@ -26,7 +26,7 @@ import getpass
 import json
 import os
 import shutil
-from subprocess import Popen
+from subprocess import PIPE, Popen
 import uuid
 
 from mlt.utils.process_helpers import run, run_popen
@@ -39,6 +39,7 @@ class CommandTester(object):
         # just in case tests fail, want a clean namespace always
         self.workdir = workdir
         self.registry = os.getenv('MLT_REGISTRY', 'localhost:5000')
+        self.registry_catalog_call = self._fetch_registry_catalog_call()
         self.app_name = str(uuid.uuid4())[:10]
         self.namespace = getpass.getuser() + '-' + self.app_name
 
@@ -46,6 +47,18 @@ class CommandTester(object):
         self.mlt_json = os.path.join(self.project_dir, 'mlt.json')
         self.build_json = os.path.join(self.project_dir, '.build.json')
         self.deploy_json = os.path.join(self.project_dir, '.push.json')
+
+    def _fetch_registry_catalog_call(self):
+        """returns either a local registry curl call or one for gcr"""
+        if 'gcr' in self.registry:
+            gcr_token = run_popen("gcloud auth print-access-token",
+                                  shell=True).stdout.read().decode(
+                "utf-8").strip()
+            catalog_call = 'curl -v -u _token:{} '.format(
+                gcr_token) + '"https://gcr.io/v2/_catalog"'
+        else:
+            catalog_call = 'curl --noproxy \"*\"  registry:5000/v2/_catalog'
+        return catalog_call
 
     def init(self):
         p = Popen(
@@ -97,14 +110,14 @@ class CommandTester(object):
             deploy_data = json.loads(f.read())
             assert 'last_push_duration' in deploy_data and \
                 'last_remote_container' in deploy_data
-        # verify that the docker image has been pushed to our local registry
+        # verify that the docker image has been pushed to our registry
         # need to decode because in python3 this output is in bytes
         assert 'true' in run_popen(
-            "curl --noproxy \"*\"  registry:5000/v2/_catalog | "
-            "jq .repositories | jq 'contains([\"{}\"])'".format(self.app_name),
-            shell=True
-        ).stdout.read().decode("utf-8")
+            "{} | jq .repositories | jq 'contains([\"{}\"])'".format(
+                self.registry_catalog_call, self.app_name),
+            shell=True).stdout.read().decode("utf-8")
         # verify that our job did indeed get deployed to k8s
+        # TODO: fix this check: https://github.com/IntelAI/mlt/issues/105
         assert run_popen(
             "kubectl get jobs --namespace={}".format(self.namespace),
             shell=True).wait() == 0

@@ -71,8 +71,12 @@ test-e2e: env-up
 	docker-compose exec test pip install tox
 	docker-compose exec test tox -e py2-e2e -e py3-e2e
 
+# EXTRA_ARGS enables usage of other docker registries for testing
+# ex: EXTRA_ARGS=`$MLT_REGISTRY_AUTH_COMMAND` make test-e2e-no-docker
+# if you'd like to use something other than localhost:5000, also set
+# MLT_REGISTRY env var and that'll be respected by tox
 test-e2e-no-docker:
-	@tox -e py2-e2e -e py3-e2e
+	@${EXTRA_ARGS:} tox -e py2-e2e -e py3-e2e
 
 clean:
 	rm -rf .venv .venv3
