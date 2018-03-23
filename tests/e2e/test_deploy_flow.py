@@ -54,5 +54,5 @@ def test_interactive_deploy():
         commands = CommandTester(workdir)
         commands.init()
         commands.build()
-        commands.deploy(no_push=True, interactive=True)
+        commands.deploy(interactive=True)
         commands.undeploy()

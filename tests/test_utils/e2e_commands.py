@@ -82,7 +82,7 @@ class CommandTester(object):
     def build(self, watch=False):
         build_cmd = ['mlt', 'build']
         if watch:
-            build_cmd.append('--watch &')
+            build_cmd.append('--watch')
         p = Popen(build_cmd, cwd=self.project_dir)
         assert p.wait() == 0
         assert os.path.isfile(self.build_json)
@@ -105,17 +105,19 @@ class CommandTester(object):
         p = Popen(deploy_cmd, cwd=self.project_dir)
         out, err = p.communicate()
         assert p.wait() == 0
-        assert os.path.isfile(self.deploy_json)
-        with open(self.deploy_json) as f:
-            deploy_data = json.loads(f.read())
-            assert 'last_push_duration' in deploy_data and \
-                'last_remote_container' in deploy_data
-        # verify that the docker image has been pushed to our registry
-        # need to decode because in python3 this output is in bytes
-        assert 'true' in run_popen(
-            "{} | jq .repositories | jq 'contains([\"{}\"])'".format(
-                self.registry_catalog_call, self.app_name),
-            shell=True).stdout.read().decode("utf-8")
+
+        if not no_push:
+            assert os.path.isfile(self.deploy_json)
+            with open(self.deploy_json) as f:
+                deploy_data = json.loads(f.read())
+                assert 'last_push_duration' in deploy_data and \
+                    'last_remote_container' in deploy_data
+            # verify that the docker image has been pushed to our registry
+            # need to decode because in python3 this output is in bytes
+            assert 'true' in run_popen(
+                "{} | jq .repositories | jq 'contains([\"{}\"])'".format(
+                    self.registry_catalog_call, self.app_name),
+                shell=True).stdout.read().decode("utf-8")
         # verify that our job did indeed get deployed to k8s
         # TODO: fix this check: https://github.com/IntelAI/mlt/issues/105
         assert run_popen(
