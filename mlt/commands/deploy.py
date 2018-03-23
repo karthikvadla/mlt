@@ -65,7 +65,9 @@ class DeployCommand(Command):
             'Pushing ', last_push_duration,
             lambda: self.push_process.poll() is not None)
         if self.push_process.poll() != 0:
-            print(colored(self.push_process.communicate()[0], 'red'))
+            push_error = self.push_process.communicate()
+            print(colored(push_error[0], 'red'))
+            print(colored(push_error[1], 'red'))
             sys.exit(1)
 
         with open('.push.json', 'w') as f:
