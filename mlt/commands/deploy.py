@@ -138,7 +138,7 @@ class DeployCommand(Command):
         # lives here. After everything is deployed we'll make a kubectl exec
         # call into our debug container
         if self.args["--interactive"]:
-            self._exec_into_pod(self.interactive_deploy_podname)
+            self._exec_into_pod(self.interactive_deploy_podname, namespace)
 
     @contextmanager
     def _deploy_interactively(self, data, filename):
@@ -183,14 +183,15 @@ class DeployCommand(Command):
               "trap : TERM INT; sleep infinity & wait"]})
         return json.dumps(data)
 
-    def _exec_into_pod(self, podname):
+    def _exec_into_pod(self, podname, namespace):
         """wait til pod comes up and then exec into it"""
         print("Connecting to pod...")
         tries = 0
         while True:
             pod = process_helpers.run_popen(
-                "kubectl get pods {} -o json".format(
-                    podname), shell=True).stdout.read().decode('utf-8')
+                "kubectl get pods --namespace {} {} -o json".format(
+                    namespace, podname),
+                shell=True).stdout.read().decode('utf-8')
             if not pod:
                 continue
             pod = json.loads(pod)
