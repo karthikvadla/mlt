@@ -34,7 +34,6 @@ from mlt.utils import config_helpers, files, progress_bar, process_helpers
 class BuildCommand(Command):
     def __init__(self, args):
         super(BuildCommand, self).__init__(args)
-        self.config = config_helpers.load_config()
 
     def action(self):
         """creates docker images
@@ -43,12 +42,13 @@ class BuildCommand(Command):
         self._watch_and_build() if self.args['--watch'] else self._build()
 
     def _build(self):
+        config = config_helpers.load_config()
         last_build_duration = files.fetch_action_arg(
             'build', 'last_build_duration')
 
         started_build_time = time.time()
 
-        container_name = "{}:{}".format(self.config['name'], uuid.uuid4())
+        container_name = "{}:{}".format(config['name'], uuid.uuid4())
         print("Starting build {}".format(container_name))
 
         # Add bar
@@ -75,7 +75,7 @@ class BuildCommand(Command):
         print("Built {}".format(container_name))
 
     def _watch_and_build(self):
-        event_handler = EventHandler(self._build, self.args)
+        event_handler = EventHandler(self._build)
         observer = Observer()
         observer.schedule(event_handler, './', recursive=True)
         observer.start()

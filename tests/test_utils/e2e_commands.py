@@ -26,6 +26,7 @@ import getpass
 import json
 import os
 import shutil
+import time
 from subprocess import PIPE, Popen
 import uuid
 
@@ -47,6 +48,7 @@ class CommandTester(object):
         self.mlt_json = os.path.join(self.project_dir, 'mlt.json')
         self.build_json = os.path.join(self.project_dir, '.build.json')
         self.deploy_json = os.path.join(self.project_dir, '.push.json')
+        self.train_file = os.path.join(self.project_dir, 'main.py')
 
     def _fetch_registry_catalog_call(self):
         """returns either a local registry curl call or one for gcr"""
@@ -83,8 +85,26 @@ class CommandTester(object):
         build_cmd = ['mlt', 'build']
         if watch:
             build_cmd.append('--watch')
-        p = Popen(build_cmd, cwd=self.project_dir)
-        assert p.wait() == 0
+
+        build_proc = Popen(build_cmd, cwd=self.project_dir)
+
+        if watch:
+            # ensure that `mlt build --watch` has started
+            time.sleep(1)
+            # we need to simulate our training file changing
+            run_popen("echo \"print('hello')\" >> {}".format(
+                self.train_file), shell=True).wait()
+            # wait for 30 seconds (for timeout) or until we've built our image
+            # then kill the build proc or it won't terminate
+            start = time.time()
+            while not os.path.exists(self.build_json):
+                time.sleep(1)
+                if time.time() - start >= 30:
+                    break
+            build_proc.kill()
+        else:
+            assert build_proc.wait() == 0
+
         assert os.path.isfile(self.build_json)
         with open(self.build_json) as f:
             build_data = json.loads(f.read())
