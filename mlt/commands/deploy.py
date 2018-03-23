@@ -103,12 +103,12 @@ class DeployCommand(Command):
            Can also launch user into interactive shell with --interactive flag
         """
         app_name = self.config['name']
-        namespace = self.config['namespace']
+        self.namespace = self.config['namespace']
         remote_container_name = files.fetch_action_arg(
             'push', 'last_remote_container')
 
         print("Deploying {}".format(remote_container_name))
-        kubernetes_helpers.ensure_namespace_exists(namespace)
+        kubernetes_helpers.ensure_namespace_exists(self.namespace)
 
         for path, dirs, filenames in os.walk("k8s-templates"):
             self.file_count = len(filenames)
@@ -130,17 +130,17 @@ class DeployCommand(Command):
                     with open(os.path.join('k8s', filename), 'w') as f:
                         f.write(out)
                     process_helpers.run(
-                        ["kubectl", "--namespace", namespace, "apply", "-R",
-                         "-f", "k8s"])
+                        ["kubectl", "--namespace", self.namespace,
+                         "apply", "-R", "-f", "k8s"])
 
             print("\nInspect created objects by running:\n"
-                  "$ kubectl get --namespace={} all\n".format(namespace))
+                  "$ kubectl get --namespace={} all\n".format(self.namespace))
 
         # we can't yield many times inside of contextmanagers so for now this
         # lives here. After everything is deployed we'll make a kubectl exec
         # call into our debug container
         if self.args["--interactive"]:
-            self._exec_into_pod(self.interactive_deploy_podname, namespace)
+            self._exec_into_pod(self.interactive_deploy_podname)
 
     @contextmanager
     def _deploy_interactively(self, data, filename):
@@ -166,7 +166,8 @@ class DeployCommand(Command):
         # once everything is done deploying
         if interactive_deploy:
             self.interactive_deploy_podname = process_helpers.run_popen(
-                "kubectl get pods --sort-by=.status.startTime " +
+                "kubectl get pods --namespace {} ".format(self.namespace) +
+                "--sort-by=.status.startTime " +
                 "| awk 'END{print $1}'", shell=True).stdout.read().decode(
                 'utf-8').strip()
 
@@ -185,7 +186,7 @@ class DeployCommand(Command):
               "trap : TERM INT; sleep infinity & wait"]})
         return json.dumps(data)
 
-    def _exec_into_pod(self, podname, namespace):
+    def _exec_into_pod(self, podname):
         """wait til pod comes up and then exec into it"""
         print("Connecting to pod...")
         # we will try 5 times, 1 sec between tries
@@ -193,7 +194,7 @@ class DeployCommand(Command):
         while True:
             pod = process_helpers.run_popen(
                 "kubectl get pods --namespace {} {} -o json".format(
-                    namespace, podname),
+                    self.namespace, podname),
                 shell=True).stdout.read().decode('utf-8')
             if not pod:
                 continue
@@ -202,7 +203,6 @@ class DeployCommand(Command):
             # gcr stores an auth token which could be returned as part
             # of the pod json data
             pod = json.loads(pod)
-            print(pod)
             if pod.get('items') or pod.get('status'):
                 if pod.get('items'):
                     pod = pod['items'][0]
