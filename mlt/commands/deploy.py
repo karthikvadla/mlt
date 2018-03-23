@@ -195,12 +195,14 @@ class DeployCommand(Command):
                 "kubectl get pods --namespace {} {} -o json".format(
                     namespace, podname),
                 shell=True).stdout.read().decode('utf-8')
-            if not pod:
+            # continue checking if a pod hasn't spun up at all yet
+            print(pod)
+            if not pod or not (pod.get('items') or pod.get('status')):
+                time.sleep(.1)
                 continue
 
             # check if pod is in running state
             pod = json.loads(pod)
-            print(pod)
             # gcr stores an auth token which could be returned as part
             # of the pod json data
             if pod.get('items'):
