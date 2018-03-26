@@ -165,11 +165,16 @@ class DeployCommand(Command):
         # this gets the most recent pod by name, so we can exec into it
         # once everything is done deploying
         if interactive_deploy:
-            self.interactive_deploy_podname = process_helpers.run_popen(
+            pod = process_helpers.run_popen(
                 "kubectl get pods --namespace {} ".format(self.namespace) +
-                "--sort-by=.status.startTime " +
-                "| awk 'END{print $1}'", shell=True).stdout.read().decode(
-                'utf-8').strip()
+                "--sort-by=.status.startTime", shell=True
+            ).stdout.read().decode('utf-8').strip().splitlines()
+            if pod:
+                # we want last pod listed, podname is always listed first
+                self.interactive_deploy_podname = pod[-1].split()[0]
+            else:
+                raise ValueError("No pods found in namespace: {}".format(
+                    self.namespace))
 
     def _patch_template_spec(self, data):
         """Makes `command` of template yaml `sleep infinity`.
