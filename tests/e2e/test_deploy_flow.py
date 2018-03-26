@@ -47,3 +47,12 @@ def test_watch_build_and_deploy_no_push():
         commands.build(watch=True)
         commands.deploy(no_push=True)
         commands.undeploy()
+
+
+def test_interactive_deploy():
+    with create_work_dir() as workdir:
+        commands = CommandTester(workdir)
+        commands.init()
+        commands.build()
+        commands.deploy(interactive=True)
+        commands.undeploy()
