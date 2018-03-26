@@ -184,6 +184,14 @@ class DeployCommand(Command):
            container in a deployment for now.
         """
         data = yaml.load(data)
+        """
+        TODO: this should be smarter
+        3 options:
+        1. search yaml for `containers` anywhere
+        2. Have function to update `containers` location depending on spec
+        3. Have templates for each kind of spec
+        I like option 1. More flexible!
+        """
         data['spec']['template']['metadata'] = {'labels': {'debug': 'true'}}
         data['spec']['template']['spec']['containers'][0].update(
             {'command':
