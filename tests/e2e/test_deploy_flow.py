@@ -49,10 +49,13 @@ def test_watch_build_and_deploy_no_push():
         commands.undeploy()
 
 
-def test_interactive_deploy():
-    with create_work_dir() as workdir:
-        commands = CommandTester(workdir)
-        commands.init()
-        commands.build()
-        commands.deploy(interactive=True)
-        commands.undeploy()
+# TODO: uncomment when https://github.com/IntelAI/mlt/issues/105 is fixed
+# Since it appears no pods are created in circleci now, no way to test
+# this there
+# def test_interactive_deploy():
+#     with create_work_dir() as workdir:
+#         commands = CommandTester(workdir)
+#         commands.init()
+#         commands.build()
+#         commands.deploy(interactive=True)
+#         commands.undeploy()
