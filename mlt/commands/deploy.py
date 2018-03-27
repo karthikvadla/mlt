@@ -221,11 +221,11 @@ class DeployCommand(Command):
                 if pod['status']['phase'] == 'Running':
                     break
 
-            if tries == self.args['--connection-attempts']:
+            if tries == self.args['--retries']:
                 raise ValueError("Pod {} not Running".format(podname))
             tries += 1
             print("Retrying {}/{}".format(
-                tries, self.args['--connection-attempts']))
+                tries, self.args['--retries']))
             time.sleep(1)
 
         process_helpers.run_popen(
