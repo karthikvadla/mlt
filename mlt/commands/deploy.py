@@ -202,7 +202,6 @@ class DeployCommand(Command):
     def _exec_into_pod(self, podname):
         """wait til pod comes up and then exec into it"""
         print("Connecting to pod...")
-        # we will try 5 times, 1 sec between tries
         tries = 0
         while True:
             pod = process_helpers.run_popen(
@@ -222,9 +221,11 @@ class DeployCommand(Command):
                 if pod['status']['phase'] == 'Running':
                     break
 
-            if tries == 5:
+            if tries == self.args['--connection-attempts']:
                 raise ValueError("Pod {} not Running".format(podname))
             tries += 1
+            print("Retrying {}/{}".format(
+                tries, self.args['--connection-attempts']))
             time.sleep(1)
 
         process_helpers.run_popen(
