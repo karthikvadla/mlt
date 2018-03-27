@@ -27,6 +27,7 @@ From here, it is a quick step to redeploy the Kubernetes objects, through `mlt d
 Prerequisites:
 - git
 - python
+- tox
 - virtualenv
 
 Installation:
