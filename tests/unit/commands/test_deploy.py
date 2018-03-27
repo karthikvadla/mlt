@@ -96,9 +96,10 @@ def yaml(patch):
     return patch('yaml.load')
 
 
-def deploy(no_push, interactive, extra_config_args):
+def deploy(no_push, interactive, extra_config_args, retries=5):
     deploy = DeployCommand(
-        {'deploy': True, '--no-push': no_push, '--interactive': interactive})
+        {'deploy': True, '--no-push': no_push,
+         '--interactive': interactive, '--retries': retries})
     deploy.config = {'name': 'app', 'namespace': 'namespace'}
     deploy.config.update(extra_config_args)
 

@@ -43,16 +43,27 @@ def test_run_command(command):
 @patch('mlt.main.docopt')
 @patch('mlt.main.run_command')
 def test_main_name_capitalized(run_command, docopt):
-    docopt.return_value = {'<name>': 'Capitalized_Name', '-i': False}
+    docopt.return_value = {'<name>': 'Capitalized_Name',
+                           '-i': False, '--retries': '5'}
     main()
     run_command.assert_called_with(
-        {'<name>': 'capitalized_name', '-i': False})
+        {'<name>': 'capitalized_name', '-i': False, '--retries': 5})
 
 
 @patch('mlt.main.docopt')
 @patch('mlt.main.run_command')
 def test_main_name_interactive(run_command, docopt):
-    docopt.return_value = {'-i': True, '<name>': 'foo'}
+    docopt.return_value = {'-i': True, '<name>': 'foo', '--retries': '5'}
     main()
     run_command.assert_called_with(
-        {'-i': True, '--interactive': True, '<name>': 'foo'})
+        {'-i': True, '--interactive': True, '<name>': 'foo',
+         '--retries': 5})
+
+
+@patch('mlt.main.docopt')
+@patch('mlt.main.run_command')
+def test_main_interactive_retries_not_default(run_command, docopt):
+    docopt.return_value = {'-i': True, '<name>': 'foo', '--retries': '8'}
+    main()
+    run_command.assert_called_with(
+        {'-i': True, '--interactive': True, '<name>': 'foo', '--retries': 8})
