@@ -40,30 +40,19 @@ def test_run_command(command):
         COMMAND_MAP[0][1].return_value.action.assert_called_once()
 
 
+@pytest.mark.parametrize('args',
+                         [{'<name>': 'Capitalized_Name',
+                           '-i': False, '--retries': '5'},
+                          {'-i': True, '<name>': 'foo', '--retries': '5'},
+                          {'-i': True, '<name>': 'foo', '--retries': '8'}])
 @patch('mlt.main.docopt')
 @patch('mlt.main.run_command')
-def test_main_name_capitalized(run_command, docopt):
-    docopt.return_value = {'<name>': 'Capitalized_Name',
-                           '-i': False, '--retries': '5'}
+def test_main_various_args(run_command, docopt, args):
+    docopt.return_value = args
+    # add common args and expected arg manipulations
+    args['--namespace'] = 'foo'
+    args['--retries'] = int(args['--retries'])
+    args['--interactive'] = True
+    args['<name>'] = args['<name>'].lower()
     main()
-    run_command.assert_called_with(
-        {'<name>': 'capitalized_name', '-i': False, '--retries': 5})
-
-
-@patch('mlt.main.docopt')
-@patch('mlt.main.run_command')
-def test_main_name_interactive(run_command, docopt):
-    docopt.return_value = {'-i': True, '<name>': 'foo', '--retries': '5'}
-    main()
-    run_command.assert_called_with(
-        {'-i': True, '--interactive': True, '<name>': 'foo',
-         '--retries': 5})
-
-
-@patch('mlt.main.docopt')
-@patch('mlt.main.run_command')
-def test_main_interactive_retries_not_default(run_command, docopt):
-    docopt.return_value = {'-i': True, '<name>': 'foo', '--retries': '8'}
-    main()
-    run_command.assert_called_with(
-        {'-i': True, '--interactive': True, '<name>': 'foo', '--retries': 8})
+    run_command.assert_called_with(args)
