@@ -216,6 +216,10 @@ class DeployCommand(Command):
             # of the pod json data
             pod = json.loads(pod)
             if pod.get('items') or pod.get('status'):
+                # if there's more than 1 thing returned, we have
+                # `pod['items']['status']` otherwise we will always have
+                # `pod['status'], so by the second if below we're safe
+                # first item is what we care about (or only item)
                 if pod.get('items'):
                     pod = pod['items'][0]
                 if pod['status']['phase'] == 'Running':
