@@ -100,7 +100,7 @@ def sanitize_input(args, regex=None):
     args['--retries'] = int(args['--retries'])
 
     # mostly this: max length 253 chars, lower case alphanumeric, -, .
-    kubernetes_name_regex = re.compile(r"^([a-z0-9\-\.]{1, 253})$")
+    kubernetes_name_regex = re.compile(r'^[a-z0-9\.\-]{1,253}$')
     if args['--namespace'] and not kubernetes_name_regex.match(
             args['--namespace']):
         raise ValueError("Namespace {} not valid. See "
