@@ -55,6 +55,7 @@ Options:
                             image from your last run.
 """
 from docopt import docopt
+import re
 from mlt.commands import (BuildCommand, DeployCommand, InitCommand,
                           TemplatesCommand, UndeployCommand)
 
@@ -77,15 +78,40 @@ def run_command(args):
             return
 
 
-def main():
-    args = docopt(__doc__, version="ML Container Templates v0.0.1")
+def sanitize_input(args, regex=None):
+    """Ensures that the values passed to us via flags aren't malicious
+       Or attempts to at least! Also sets types of vars and other tweaks
+       Optional regex: Match the input based on the regex too
+                       Raise ValueError if no match
+       TODO: this can definitely be smarter...see if docopt can do some of it
+       This could also be leveraged: https://github.com/keleshev/schema
+       It is recommended on docopt github to do validation
+    """
     # docker requires repo name to be in lowercase
     if args["<name>"]:
         args["<name>"] = args["<name>"].lower()
+
     # -i is an alias, so ensure that we only have to do logic on --interactive
     if args["-i"]:
         args["--interactive"] = True
+
     # docopt doesn't support type assignment:
     # https://github.com/docopt/docopt/issues/8
     args['--retries'] = int(args['--retries'])
+
+    # mostly this: max length 253 chars, lower case alphanumeric, -, .
+    kubernetes_name_regex = re.compile(r"^([a-z0-9\-\.]{1, 253})$")
+    if args['--namespace'] and not kubernetes_name_regex.match(
+            args['--namespace']):
+        raise ValueError("Namespace {} not valid. See "
+                         "https://kubernetes.io/docs/concepts/overview"
+                         "/working-with-objects/names/#names".format(
+                             args['--namespace']))
+
+    return args
+
+
+def main():
+    args = sanitize_input(
+        docopt(__doc__, version="ML Container Templates v0.0.1"))
     run_command(args)
