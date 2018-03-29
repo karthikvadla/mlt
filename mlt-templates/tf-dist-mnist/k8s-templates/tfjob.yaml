@@ -1,0 +1,28 @@
+apiVersion: "kubeflow.org/v1alpha1"
+kind: TFJob
+metadata:
+  name: $app-$run
+  labels:
+    mlt-app-name: $app
+spec:
+  replicaSpecs:
+    - replicas: 1
+      tfReplicaType: PS
+      template:
+        spec:
+          containers:
+            - image: $image
+              name: tensorflow
+          restartPolicy: OnFailure
+    - replicas: 2
+      tfReplicaType: WORKER
+      template:
+        spec:
+          containers:
+            - image: $image
+              name: tensorflow
+          restartPolicy: OnFailure
+  terminationPolicy:
+    chief:
+      replicaName: WORKER
+      replicaIndex: 0

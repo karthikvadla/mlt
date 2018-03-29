@@ -60,7 +60,8 @@ class BuildCommand(Command):
             'Building', last_build_duration,
             lambda: build_process.poll() is not None)
         if build_process.poll() != 0:
-            print(colored(build_process.communicate()[0], 'red'))
+            print(colored(build_process.communicate()[0].decode("utf-8"),
+                  'red'))
             sys.exit(1)
 
         built_time = time.time()

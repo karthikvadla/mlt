@@ -16,6 +16,7 @@
 #
 
 SHELL=bash
+PY := $(shell python --version 2>&1  | cut -c8)
 
 .PHONY: venv test lint clean
 
@@ -43,11 +44,11 @@ coverage:
 
 install:
 	@echo "Installing mlt to system..."
-	@python setup.py install
+	@python${PY} setup.py install
 
 uninstall:
 	@echo "Uninstalling mlt from system..."
-	@python setup.py uninstall
+	@pip${PY} uninstall -y mlt
 
 docker:
 	docker build \
