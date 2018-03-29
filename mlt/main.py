@@ -40,7 +40,7 @@ Options:
   --namespace=<namespace> Kubernetes Namespace to use.
                           If none is set, will attempt to create or
                           use a namespace identical to username.
-  --skip-crd-check=<bool> To avoid crd check during mlt init[default: False]
+  --skip-crd-check=<bool> To avoid crd check during mlt init [default: False].
 """
 from docopt import docopt
 

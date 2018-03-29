@@ -61,13 +61,10 @@ class InitCommand(Command):
 
                         if missing:
                             print(
-                                "Warning: Template will not work !!"
-                                "Please contact your administrator to install below list of operators(crds)")
+                                "Warning: Template will not work on your current cluster \n"
+                                "Please contact your administrator to install the following operators: \n")
                             for crd in missing_crds:
-                                print crd
-
-                            print("To skip CRD check, please us `mlt init --skip-crd-check`")
-                            sys.exit(1)
+                                print(crd)
 
                 data = self._build_mlt_json()
                 with open(os.path.join(self.app_name, 'mlt.json'), 'w') as f:

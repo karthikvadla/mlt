@@ -36,6 +36,7 @@ def test_init_dir_exists():
         'init': True,
         '--template': 'hello-world',
         '<name>': new_dir,
+        '--skip-crd-check': True,
         '--template-repo': project.basedir()
     }
     try:
@@ -65,6 +66,7 @@ def test_init(open_mock, proc_helpers, shutil_mock, check_output):
         '--template-repo': project.basedir(),
         '--registry': None,
         '--namespace': None,
+        '--skip-crd-check': True,
         '<name>': new_dir
     }
     init = InitCommand(init_dict)
@@ -83,8 +85,42 @@ def test_init(open_mock, proc_helpers, shutil_mock):
         '--template-repo': project.basedir(),
         '--registry': True,
         '--namespace': None,
+        '--skip-crd-check': True,
         '<name>': new_dir
     }
     init = InitCommand(init_dict)
     init.action()
     assert init.app_name == new_dir
+
+
+@patch('mlt.commands.init.shutil')
+@patch('mlt.commands.init.kubernetes_helpers')
+@patch('mlt.commands.init.process_helpers')
+@patch('mlt.commands.init.open')
+def test_init_crd_check(open_mock, proc_helpers, kube_helpers, shutil_mock):
+    new_dir = str(uuid.uuid4())
+    init_dict = {
+        'init': True,
+        '--template': 'tf-distributed',
+        '--template-repo': project.basedir(),
+        '--registry': True,
+        '--namespace': None,
+        '--skip-crd-check': False,
+        '<name>': new_dir
+    }
+    kube_helpers.check_crds.return_value = (True, ['tfjob'])
+    init = InitCommand(init_dict)
+    try:
+        with catch_stdout() as caught_output:
+            init.action()
+            output = caught_output.getvalue()
+
+        print output
+        assert output == \
+            "Warning: Template will not work on your current cluster \n" \
+            "Please contact your administrator to install the following operators: \n" \
+            "tfjob"
+    finally:
+        os.rmdir(new_dir)
+
+
