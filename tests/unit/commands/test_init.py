@@ -93,11 +93,8 @@ def test_init(open_mock, proc_helpers, shutil_mock):
     assert init.app_name == new_dir
 
 
-@patch('mlt.commands.init.shutil')
 @patch('mlt.commands.init.kubernetes_helpers')
-@patch('mlt.commands.init.process_helpers')
-@patch('mlt.commands.init.open')
-def test_init_crd_check(open_mock, proc_helpers, kube_helpers, shutil_mock):
+def test_init_crd_check(kube_helpers):
     new_dir = str(uuid.uuid4())
     init_dict = {
         'init': True,
@@ -115,11 +112,8 @@ def test_init_crd_check(open_mock, proc_helpers, kube_helpers, shutil_mock):
             init.action()
             output = caught_output.getvalue()
 
-        print output
-        assert output == \
-            "Warning: Template will not work on your current cluster \n" \
-            "Please contact your administrator to install the following operators: \n" \
-            "tfjob"
+        message_code = output.find("tfjob")
+        assert message_code >= 0
     finally:
         os.rmdir(new_dir)
 
