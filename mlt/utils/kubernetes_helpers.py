@@ -23,6 +23,7 @@ import os
 from subprocess import call
 
 from mlt.utils import process_helpers
+from kubernetes import client, config
 
 
 def ensure_namespace_exists(ns):
@@ -30,3 +31,21 @@ def ensure_namespace_exists(ns):
         os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
     if exit_code is not 0:
         process_helpers.run(["kubectl", "create", "namespace", ns])
+
+
+def check_crds(crd_list):
+    """
+    Check if given crd list installed on K8 or not.
+    """
+    config.load_kube_config()
+    api_client = client.ApiextensionsV1beta1Api()
+    current_crds = [x['spec']['names']['kind'].lower()
+                    for x in api_client.list_custom_resource_definition().to_dict()['items']]
+    missing = False
+    missing_crds = []
+    for crd in crd_list:
+        if crd not in current_crds:
+            missing = True
+            missing_crds.append(crd)
+
+    return missing, missing_crds

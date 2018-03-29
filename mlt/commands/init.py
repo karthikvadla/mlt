@@ -28,7 +28,7 @@ import traceback
 
 from mlt import TEMPLATES_DIR
 from mlt.commands import Command
-from mlt.utils import process_helpers, git_helpers
+from mlt.utils import process_helpers, git_helpers, kubernetes_helpers
 
 
 class InitCommand(Command):
@@ -42,13 +42,32 @@ class InitCommand(Command):
         """
         template_name = self.args["--template"]
         template_repo = self.args["--template-repo"]
-
+        skip_crd_check = self.args["--skip-crd-check"]
         with git_helpers.clone_repo(template_repo) as temp_clone:
             templates_directory = os.path.join(
                 temp_clone, TEMPLATES_DIR, template_name)
 
             try:
                 shutil.copytree(templates_directory, self.app_name)
+
+                if not skip_crd_check:
+                    # check for crds
+                    crd_file = os.path.join(self.app_name, 'crd-requirements.txt')
+                    if os.path.exists(crd_file):
+                        with open(crd_file) as f:
+                            crd_list = f.read().splitlines()
+
+                        missing, missing_crds = kubernetes_helpers.check_crds(crd_list)
+
+                        if missing:
+                            print(
+                                "Warning: Template will not work !!"
+                                "Please contact your administrator to install below list of operators(crds)")
+                            for crd in missing_crds:
+                                print crd
+
+                            print("To skip CRD check, please us `mlt init --skip-crd-check`")
+                            sys.exit(1)
 
                 data = self._build_mlt_json()
                 with open(os.path.join(self.app_name, 'mlt.json'), 'w') as f:

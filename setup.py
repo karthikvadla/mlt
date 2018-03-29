@@ -33,7 +33,8 @@ setup(name='mlt',
           'watchdog>=0.8.3',
           'progressbar2>=3.36.0',
           'termcolor>=1.1.0',
-          'tabulate>=0.8.2'
+          'tabulate>=0.8.2',
+          'kubernetes>=5.0.0'
       ],
       entry_points={
           'console_scripts': ['mlt=mlt.main:main']
