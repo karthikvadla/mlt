@@ -43,7 +43,7 @@ Options:
 from docopt import docopt
 
 from mlt.commands import (BuildCommand, DeployCommand, InitCommand,
-                          TemplatesCommand, UndeployCommand)
+                          TemplatesCommand, UndeployCommand, LogsCommand)
 
 # every available command and its corresponding action will go here
 COMMAND_MAP = (
@@ -53,6 +53,7 @@ COMMAND_MAP = (
     ('template', TemplatesCommand),
     ('templates', TemplatesCommand),
     ('undeploy', UndeployCommand),
+    ('logs', LogsCommand)
 )
 
 

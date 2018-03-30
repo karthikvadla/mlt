@@ -18,10 +18,30 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from mlt.commands.base import Command   # noqa
-from mlt.commands.build import BuildCommand     # noqa
-from mlt.commands.deploy import DeployCommand   # noqa
-from mlt.commands.init import InitCommand   # noqa
-from mlt.commands.templates import TemplatesCommand     # noqa
-from mlt.commands.undeploy import UndeployCommand   # noqa
-from mlt.commands.logs import LogsCommand   #noqa
+import getpass
+import json
+import os
+import sys
+import shutil
+from subprocess import check_output
+import traceback
+
+from mlt import TEMPLATES_DIR
+from mlt.commands import Command
+from mlt.utils import (process_helpers,
+                       config_helpers,
+                       git_helpers)
+
+from kubernetes import client, config
+
+
+class LogsCommand(Command):
+    def __init__(self, args):
+        super(LogsCommand, self).__init__(args)
+        self.config = config_helpers.load_config()
+
+    def action(self):
+        """
+        Display logs from all pods.
+        
+        """
