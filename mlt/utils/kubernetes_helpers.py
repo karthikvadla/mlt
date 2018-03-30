@@ -45,7 +45,7 @@ def check_crds(crd_list):
                     .list_custom_resource_definition()
                     .to_dict()['items']]
     missing = False
-    missing_crds = list(set(crd_list)-set(current_crds))
+    missing_crds = set(crd_list)-set(current_crds)
     if missing_crds:
         missing = True
 

@@ -95,7 +95,6 @@ class InitCommand(Command):
 
     def _check_crd(self, skip_crd_check):
         if not skip_crd_check:
-            # check for crds
             crd_file = os.path.join(self.app_name, 'crd-requirements.txt')
             if os.path.exists(crd_file):
                 with open(crd_file) as f:

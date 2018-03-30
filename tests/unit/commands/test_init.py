@@ -56,7 +56,7 @@ def test_init_dir_exists():
 @patch('mlt.commands.init.shutil')
 @patch('mlt.commands.init.process_helpers')
 @patch('mlt.commands.init.open')
-def test_init(open_mock, proc_helpers, shutil_mock, check_output):
+def test_init(open_mock, proc_helpers, shutil_mock, check_output_mock):
     check_output_mock.return_value.decode.return_value = 'bar'
     new_dir = str(uuid.uuid4())
 
@@ -74,28 +74,10 @@ def test_init(open_mock, proc_helpers, shutil_mock, check_output):
     assert init.app_name == new_dir
 
 
-@patch('mlt.commands.init.shutil')
+@patch('mlt.commands.init.check_output')
 @patch('mlt.commands.init.process_helpers')
-@patch('mlt.commands.init.open')
-def test_init(open_mock, proc_helpers, shutil_mock):
-    new_dir = str(uuid.uuid4())
-    init_dict = {
-        'init': True,
-        '--template': 'hello-world',
-        '--template-repo': project.basedir(),
-        '--registry': True,
-        '--namespace': None,
-        '--skip-crd-check': True,
-        '<name>': new_dir
-    }
-    init = InitCommand(init_dict)
-    init.action()
-    assert init.app_name == new_dir
-
-
-@patch('mlt.commands.deploy.process_helpers')
 @patch('mlt.commands.init.kubernetes_helpers')
-def test_init_crd_check(kube_helpers, proc_helpers):
+def test_init_crd_check(kube_helpers, proc_helpers, check_output_mock):
     new_dir = str(uuid.uuid4())
     init_dict = {
         'init': True,
