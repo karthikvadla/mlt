@@ -40,12 +40,13 @@ def check_crds(crd_list):
     config.load_kube_config()
     api_client = client.ApiextensionsV1beta1Api()
     current_crds = [x['spec']['names']['kind'].lower()
-                    for x in api_client.list_custom_resource_definition().to_dict()['items']]
+                    for x in
+                    api_client
+                    .list_custom_resource_definition()
+                    .to_dict()['items']]
     missing = False
-    missing_crds = []
-    for crd in crd_list:
-        if crd not in current_crds:
-            missing = True
-            missing_crds.append(crd)
+    missing_crds = list(set(crd_list)-set(current_crds))
+    if missing_crds:
+        missing = True
 
     return missing, missing_crds

@@ -24,7 +24,7 @@ Usage:
   mlt --version
   mlt init [--template=<template> --template-repo=<repo>]
       [--registry=<registry> --namespace=<namespace]
-      [--skip-crd-check=<bool>] <name>
+      [--skip-crd-check] <name>
   mlt build [--watch]
   mlt deploy [--no-push]
   mlt undeploy
@@ -40,7 +40,7 @@ Options:
   --namespace=<namespace> Kubernetes Namespace to use.
                           If none is set, will attempt to create or
                           use a namespace identical to username.
-  --skip-crd-check=<bool> To avoid crd check during mlt init [default: False].
+  --skip-crd-check        To avoid crd check during mlt init [default: False].
 """
 from docopt import docopt
 

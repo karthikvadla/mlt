@@ -115,6 +115,6 @@ def test_init_crd_check(kube_helpers):
         message_code = output.find("tfjob")
         assert message_code >= 0
     finally:
-        os.rmdir(new_dir)
+        shutil.rmtree(new_dir)
 
 
