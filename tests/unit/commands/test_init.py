@@ -93,8 +93,9 @@ def test_init(open_mock, proc_helpers, shutil_mock):
     assert init.app_name == new_dir
 
 
+@patch('mlt.commands.deploy.process_helpers')
 @patch('mlt.commands.init.kubernetes_helpers')
-def test_init_crd_check(kube_helpers):
+def test_init_crd_check(kube_helpers, proc_helpers):
     new_dir = str(uuid.uuid4())
     init_dict = {
         'init': True,
