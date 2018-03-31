@@ -26,7 +26,7 @@ Usage:
       [--registry=<registry> --namespace=<namespace]
       [--skip-crd-check] <name>
   mlt build [--watch]
-  mlt deploy [--no-push]
+  mlt deploy [--no-push | --skip-crd-check]
   mlt undeploy
   mlt (template | templates) list [--template-repo=<repo>]
 

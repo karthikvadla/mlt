@@ -44,7 +44,9 @@ def test_deploy_gce(listdir_mock, progress_bar, popen_mock, open_mock,
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
 
-    deploy = DeployCommand({'deploy': True, '--no-push': False})
+    deploy = DeployCommand({'deploy': True,
+                            '--no-push': False,
+                            '--skip-crd-check': True})
     deploy.config = {
         'gceProject': 'gcr://tacoprojectbestproject',
         'name': 'besttacoapp',
@@ -83,7 +85,9 @@ def test_deploy_docker(listdir_mock, progress_bar, popen_mock, open_mock,
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
 
-    deploy = DeployCommand({'deploy': True, '--no-push': False})
+    deploy = DeployCommand({'deploy': True,
+                            '--no-push': False,
+                            '--skip-crd-check': True})
     deploy.config = {
         'registry': 'dockerhub',
         'name': 'besttacoapp',
@@ -122,7 +126,9 @@ def test_deploy_without_push(listdir_mock, progress_bar, popen_mock, open_mock,
         lambda x, y, z: print('Pushing ')
     popen_mock.return_value.poll.return_value = 0
 
-    deploy = DeployCommand({'deploy': True, '--no-push': True})
+    deploy = DeployCommand({'deploy': True,
+                            '--no-push': True,
+                            '--skip-crd-check': True})
     deploy.config = {
         'gceProject': 'gcr://projectfoo',
         'name': 'foo',

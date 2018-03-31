@@ -50,7 +50,9 @@ class InitCommand(Command):
             try:
                 shutil.copytree(templates_directory, self.app_name)
 
-                self._check_crd(skip_crd_check)
+                kubernetes_helpers.check_crds(skip_crd_check,
+                                              commad_type='init',
+                                              app_name=self.app_name)
 
                 data = self._build_mlt_json()
                 with open(os.path.join(self.app_name, 'mlt.json'), 'w') as f:
@@ -92,21 +94,3 @@ class InitCommand(Command):
         process_helpers.run(["git", "add", "."], cwd=self.app_name)
         print(process_helpers.run(
             ["git", "commit", "-m", "Initial commit."], cwd=self.app_name))
-
-    def _check_crd(self, skip_crd_check):
-        if not skip_crd_check:
-            crd_file = os.path.join(self.app_name, 'crd-requirements.txt')
-            if os.path.exists(crd_file):
-                with open(crd_file) as f:
-                    crd_list = f.readlines()
-
-                missing, missing_crds = kubernetes_helpers.check_crds(crd_list)
-
-                if missing:
-                    print(
-                        "Warning: Template will "
-                        "not work on your current cluster \n"
-                        "Please contact your administrator "
-                        "to install the following operator(s): \n")
-                    for crd in missing_crds:
-                        print(crd)

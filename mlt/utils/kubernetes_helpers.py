@@ -19,6 +19,7 @@
 #
 
 import os
+import sys
 
 from subprocess import call
 
@@ -33,7 +34,34 @@ def ensure_namespace_exists(ns):
         process_helpers.run(["kubectl", "create", "namespace", ns])
 
 
-def check_crds(crd_list):
+def check_crds(skip_crd_check, commad_type, app_name=None):
+    if not skip_crd_check:
+        if app_name is None:
+            crd_file = 'crd-requirements.txt'
+        else:
+            crd_file = os.path.join(app_name, 'crd-requirements.txt')
+        if os.path.exists(crd_file):
+            with open(crd_file) as f:
+                crd_list = f.readlines()
+
+            missing, missing_crds = _checking_crds_on_k8(crd_list)
+
+            if missing:
+                print(
+                    "Warning: Template will "
+                    "not work on your current cluster \n"
+                    "Please contact your administrator "
+                    "to install the following operator(s): \n")
+                for crd in missing_crds:
+                    print(crd)
+
+                if commad_type is 'deploy':
+                    sys.exit(1)
+        else:
+            print('file does not exits: {}'.format(crd_file))
+
+
+def _checking_crds_on_k8(crd_list):
     """
     Check if given crd list installed on K8 or not.
     """

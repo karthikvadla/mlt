@@ -39,13 +39,17 @@ class DeployCommand(Command):
         build_helpers.verify_build(self.args)
 
     def action(self):
+        app_name = self.config['name']
+        namespace = self.config['namespace']
+        skip_crd_check = self.args['--skip-crd-check']
+        kubernetes_helpers.check_crds(skip_crd_check,
+                                      commad_type='deploy')
+
         if self.args['--no-push']:
             print("Skipping image push")
         else:
             self._push()
 
-        app_name = self.config['name']
-        namespace = self.config['namespace']
         remote_container_name = files.fetch_action_arg(
             'push', 'last_remote_container')
 
