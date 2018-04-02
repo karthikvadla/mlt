@@ -17,20 +17,17 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 #
-
 from contextlib import contextmanager
-from mlt.utils import process_helpers
 import shutil
 import tempfile
 
 
 @contextmanager
-def clone_repo(repo):
-    destination = tempfile.mkdtemp()
-    process_helpers.run_popen(
-        "git clone {} {}".format(repo, destination),
-        shell=True, stdout=False, stderr=False).wait()
+def create_work_dir():
+    workdir = tempfile.mkdtemp()
     try:
-        yield destination
+        yield workdir
     finally:
-        shutil.rmtree(destination)
+        # even on error we still need to remove dir when done
+        # https://docs.python.org/2/library/tempfile.html#tempfile.mkdtemp
+        shutil.rmtree(workdir)

@@ -76,7 +76,7 @@ class BuildCommand(Command):
         print("Built {}".format(container_name))
 
     def _watch_and_build(self):
-        event_handler = EventHandler(self._build, self.args)
+        event_handler = EventHandler(self._build)
         observer = Observer()
         observer.schedule(event_handler, './', recursive=True)
         observer.start()

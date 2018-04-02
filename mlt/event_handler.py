@@ -25,8 +25,7 @@ from subprocess import call
 
 
 class EventHandler(object):
-    def __init__(self, callback, args):
-        self.args = args
+    def __init__(self, callback):
         self.last_changed = time.time()
         self.dirty = False
         self.timer = None
@@ -46,5 +45,5 @@ class EventHandler(object):
 
         print("event.src_path {}".format(event.src_path))
 
-        self.timer = Timer(3, lambda: self.callback(self.args))
+        self.timer = Timer(3, lambda: self.callback())
         self.timer.start()

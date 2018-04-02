@@ -42,11 +42,11 @@ def check_crds(skip_crd_check, commad_type, app_name=None):
             crd_file = os.path.join(app_name, 'crd-requirements.txt')
         if os.path.exists(crd_file):
             with open(crd_file) as f:
-                crd_list = f.readlines()
+                crd_set = set(f.readlines())
 
-            missing, missing_crds = _checking_crds_on_k8(crd_list)
+            missing_crds = _checking_crds_on_k8(crd_set)
 
-            if missing:
+            if missing_crds:
                 print(
                     "Warning: Template will "
                     "not work on your current cluster \n"
@@ -61,20 +61,20 @@ def check_crds(skip_crd_check, commad_type, app_name=None):
             print('file does not exits: {}'.format(crd_file))
 
 
-def _checking_crds_on_k8(crd_list):
+def _checking_crds_on_k8(crd_set):
     """
     Check if given crd list installed on K8 or not.
     """
     config.load_kube_config()
     api_client = client.ApiextensionsV1beta1Api()
-    current_crds = [x['spec']['names']['kind'].lower()
-                    for x in
-                    api_client
-                    .list_custom_resource_definition()
-                    .to_dict()['items']]
-    missing = False
-    missing_crds = set(crd_list)-set(current_crds)
-    if missing_crds:
-        missing = True
+    current_crds = set([x['spec']['names']['kind'].lower()
+                        for x in api_client
+                       .list_custom_resource_definition()
+                       .to_dict()['items']])
+    # missing = False
+    missing_crds = (crd_set-current_crds)
+    # if missing_crds:
+    #     missing = True
 
-    return missing, missing_crds
+    # return missing, missing_crds
+    return missing_crds

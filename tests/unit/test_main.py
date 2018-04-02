@@ -21,7 +21,7 @@
 import pytest
 from mock import MagicMock, patch
 
-from mlt.main import run_command
+from mlt.main import main, run_command
 
 """
 All these tests assert that given a command arg from docopt we call
@@ -38,3 +38,21 @@ def test_run_command(command):
             as COMMAND_MAP:
         run_command({command: True})
         COMMAND_MAP[0][1].return_value.action.assert_called_once()
+
+
+@pytest.mark.parametrize('args',
+                         [{'<name>': 'Capitalized_Name',
+                           '-i': False, '--retries': '5'},
+                          {'-i': True, '<name>': 'foo', '--retries': '5'},
+                          {'-i': True, '<name>': 'foo', '--retries': '8'}])
+@patch('mlt.main.docopt')
+@patch('mlt.main.run_command')
+def test_main_various_args(run_command, docopt, args):
+    docopt.return_value = args
+    # add common args and expected arg manipulations
+    args['--namespace'] = 'foo'
+    args['--retries'] = int(args['--retries'])
+    args['--interactive'] = True
+    args['<name>'] = args['<name>'].lower()
+    main()
+    run_command.assert_called_with(args)

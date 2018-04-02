@@ -17,12 +17,12 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 #
-
-import os
 import json
+import os
+import sys
 import time
 import uuid
-import sys
+import yaml
 from string import Template
 from subprocess import Popen, PIPE
 from termcolor import colored
@@ -39,8 +39,6 @@ class DeployCommand(Command):
         build_helpers.verify_build(self.args)
 
     def action(self):
-        app_name = self.config['name']
-        namespace = self.config['namespace']
         skip_crd_check = self.args['--skip-crd-check']
         kubernetes_helpers.check_crds(skip_crd_check,
                                       commad_type='deploy')
@@ -49,29 +47,7 @@ class DeployCommand(Command):
             print("Skipping image push")
         else:
             self._push()
-
-        remote_container_name = files.fetch_action_arg(
-            'push', 'last_remote_container')
-
-        print("Deploying {}".format(remote_container_name))
-
-        # Write new container to deployment
-        for filename in os.listdir("k8s-templates"):
-            with open(os.path.join('k8s-templates', filename)) as f:
-                template = Template(f.read())
-                out = template.substitute(image=remote_container_name,
-                                          app=app_name, run=str(uuid.uuid4()))
-
-                with open(os.path.join('k8s', filename), 'w') as f:
-                    f.write(out)
-
-            kubernetes_helpers.ensure_namespace_exists(namespace)
-            process_helpers.run(
-                ["kubectl", "--namespace", namespace, "apply", "-R",
-                 "-f", "k8s"])
-
-            print("\nInspect created objects by running:\n"
-                  "$ kubectl get --namespace={} all\n".format(namespace))
+        self._deploy_new_container()
 
     def _push(self):
         last_push_duration = files.fetch_action_arg(
@@ -91,7 +67,9 @@ class DeployCommand(Command):
             'Pushing ', last_push_duration,
             lambda: self.push_process.poll() is not None)
         if self.push_process.poll() != 0:
-            print(colored(self.push_process.communicate()[0], 'red'))
+            push_error = self.push_process.communicate()
+            print(colored(push_error[0], 'red'))
+            print(colored(push_error[1], 'red'))
             sys.exit(1)
 
         with open('.push.json', 'w') as f:
@@ -121,3 +99,188 @@ class DeployCommand(Command):
     def _tag(self):
         process_helpers.run(
             ["docker", "tag", self.container_name, self.remote_container_name])
+
+    def _deploy_new_container(self):
+        """Substitutes image, app, run data into k8s-template selected.
+           Can also launch user into interactive shell with --interactive flag
+        """
+        app_name = self.config['name']
+        self.namespace = self.config['namespace']
+        remote_container_name = files.fetch_action_arg(
+            'push', 'last_remote_container')
+        if remote_container_name is None:
+            raise ValueError("No image found to deploy with. Run a plain "
+                             "`mlt deploy` to fix this. Most common reason "
+                             "for this is a --no-push was used before "
+                             "any image was available to use.")
+
+        print("Deploying {}".format(remote_container_name))
+        kubernetes_helpers.ensure_namespace_exists(self.namespace)
+
+        # do template substitution across everything in `k8s-templates` dir
+        # replaces things with $ with the vars from template.substitute
+        # also patches deployment if interactive mode is set
+        self.interactive_deployment_found = False
+        for path, dirs, filenames in os.walk("k8s-templates"):
+            self.file_count = len(filenames)
+            for filename in filenames:
+                with open(os.path.join(path, filename)) as f:
+                    template = Template(f.read())
+                out = template.substitute(
+                    image=remote_container_name,
+                    app=app_name, run=str(uuid.uuid4()))
+
+                interactive, out = self._check_for_interactive_deployment(
+                    out, filename)
+                self._apply_template(out, filename)
+                if interactive:
+                    interactive_podname = self._get_most_recent_podname()
+
+            print("\nInspect created objects by running:\n"
+                  "$ kubectl get --namespace={} all\n".format(self.namespace))
+
+        # After everything is deployed we'll make a kubectl exec
+        # call into our debug container if interactive mode
+        if self.args["--interactive"] and self.interactive_deployment_found:
+            self._exec_into_pod(interactive_podname)
+        elif not self.interactive_deployment_found and \
+                self.args['--interactive']:
+            raise ValueError("Unable to find deployment to run interactively. "
+                             "Multiple deployment files found and bad "
+                             "<kube_spec> argument passed.")
+
+    def _check_for_interactive_deployment(self, data, filename):
+        """users can have multiple deployment templates
+           If only one file in template dir then we'll interactively deploy
+           that one, or if filename matches the <kube_spec> optional param
+           otherwise we'll throw an error
+        """
+        interactive = False
+        if self.args['--interactive']:
+            if self.file_count == 1 or \
+                    self.args["<kube_spec>"] == filename:
+                data = self._patch_template_spec(data)
+                interactive = True
+                # if we never hit this point, throw error at end of deployment
+                # process because we wanted an interactive deployment
+                # but nothing matched criteria
+                self.interactive_deployment_found = True
+        return interactive, data
+
+    def _apply_template(self, out, filename):
+        """take k8s-template data and create deployment in k8s dir"""
+        with open(os.path.join('k8s', filename), 'w') as f:
+            f.write(out)
+        process_helpers.run(
+            ["kubectl", "--namespace", self.namespace,
+             "apply", "-R", "-f", "k8s"])
+
+    def _get_most_recent_podname(self):
+        """don't know of a better way to do this; grab the pod
+           created by the job we just deployed
+           this gets the most recent pod by name, so we can exec
+           into it once everything is done deploying
+        """
+        pod = process_helpers.run_popen(
+            "kubectl get pods --namespace {} ".format(
+                self.namespace) +
+            "--sort-by=.status.startTime", shell=True
+        ).stdout.read().decode('utf-8').strip().splitlines()
+        if pod:
+            # we want last pod listed, podname is always first
+            return pod[-1].split()[0]
+        else:
+            raise ValueError(
+                "No pods found in namespace: {}".format(
+                    self.namespace))
+
+    def _patch_template_spec(self, data):
+        """Makes `command` of template yaml `sleep infinity`.
+           We will also add a `debug=true` label onto this pod for easy
+           discovery later.
+           # NOTE: for now we only support basic functionality. Only 1
+           container in a deployment for now. If there is > 1 container,
+           we'll interactively deploy first one we find.
+        """
+        data = yaml.load(data)
+
+        # references to locations in `data` that contain template and
+        # containers locations. This saves calling recursive function
+        # twice; once we find a location we store that and move on
+        self.template_location = None
+        self.containers_location = None
+
+        self._find_metadata_and_container_spec(data)
+        if not self.template_location or not self.containers_location:
+            raise ValueError("Unable to find 'templates' or 'containers' in "
+                             "spec. Unable to deploy interactively without "
+                             "these.")
+
+        self.template_location['metadata'] = {'labels': {'debug': 'true'}}
+        self.containers_location[0].update(
+            {'command':
+             ["/bin/bash", "-c",
+              "trap : TERM INT; sleep infinity & wait"]})
+        return json.dumps(data)
+
+    def _find_metadata_and_container_spec(self, data):
+        """recursively finds `metadata` and `containers` location in
+           deployment spec, that way we can apply debug label and update
+           container deployment to sleep
+        """
+        # containers and metadata will always be dicts, 98% sure
+        data_is_dict = isinstance(data, dict)
+        if data_is_dict:
+            if not self.template_location:
+                if 'template' in data:
+                    self.template_location = data['template']
+            if not self.containers_location:
+                if 'containers' in data:
+                    self.containers_location = data['containers']
+
+        if self.template_location and self.containers_location:
+            return
+
+        if data_is_dict:
+            for key, val in data.items():
+                self._find_metadata_and_container_spec(val)
+        elif isinstance(data, list):
+            for elem in data:
+                self._find_metadata_and_container_spec(elem)
+
+    def _exec_into_pod(self, podname):
+        """wait til pod comes up and then exec into it"""
+        print("Connecting to pod...")
+        tries = 0
+        while True:
+            pod = process_helpers.run_popen(
+                "kubectl get pods --namespace {} {} -o json".format(
+                    self.namespace, podname),
+                shell=True).stdout.read().decode('utf-8')
+            if not pod:
+                continue
+
+            # check if pod is in running state
+            # gcr stores an auth token which could be returned as part
+            # of the pod json data
+            pod = json.loads(pod)
+            if pod.get('items') or pod.get('status'):
+                # if there's more than 1 thing returned, we have
+                # `pod['items']['status']` otherwise we will always have
+                # `pod['status'], so by the second if below we're safe
+                # first item is what we care about (or only item)
+                if pod.get('items'):
+                    pod = pod['items'][0]
+                if pod['status']['phase'] == 'Running':
+                    break
+
+            if tries == self.args['--retries']:
+                raise ValueError("Pod {} not Running".format(podname))
+            tries += 1
+            print("Retrying {}/{}".format(
+                tries, self.args['--retries']))
+            time.sleep(1)
+
+        process_helpers.run_popen(
+            ["kubectl", "exec", "-it", podname,
+             "/bin/bash"], stdout=None, stderr=None).wait()
