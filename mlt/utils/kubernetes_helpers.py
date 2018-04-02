@@ -43,7 +43,7 @@ def check_crds(commad_type, app_name=None):
         with open(crd_file) as f:
             crd_set = set(f.readlines())
 
-        missing_crds = _checking_crds_on_k8(crd_set)
+        missing_crds = checking_crds_on_k8(crd_set)
 
         if missing_crds:
             print(
@@ -60,7 +60,7 @@ def check_crds(commad_type, app_name=None):
         print('file does not exits: {}'.format(crd_file))
 
 
-def _checking_crds_on_k8(crd_set):
+def checking_crds_on_k8(crd_set):
     """
     Check if given crd list installed on K8 or not.
     """

@@ -88,16 +88,14 @@ def test_init_crd_check(kube_helpers, proc_helpers, check_output_mock):
         '--skip-crd-check': False,
         '<name>': new_dir
     }
-    kube_helpers._checking_crds_on_k8.return_value = set(['tfjob'])
+    kube_helpers.checking_crds_on_k8.return_value = {'tfjobs.kubeflow.org'}
     init = InitCommand(init_dict)
     try:
         with catch_stdout() as caught_output:
             init.action()
             output = caught_output.getvalue()
 
-        message_code = output.find("tfjob")
+        message_code = output.find("tfjobs.kubeflow.org")
         assert message_code >= 0
     finally:
         shutil.rmtree(new_dir)
-
-
