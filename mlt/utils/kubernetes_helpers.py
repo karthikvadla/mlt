@@ -34,47 +34,44 @@ def ensure_namespace_exists(ns):
         process_helpers.run(["kubectl", "create", "namespace", ns])
 
 
-def check_crds(skip_crd_check, commad_type, app_name=None):
-    if not skip_crd_check:
-        if app_name is None:
-            crd_file = 'crd-requirements.txt'
-        else:
-            crd_file = os.path.join(app_name, 'crd-requirements.txt')
-        if os.path.exists(crd_file):
-            with open(crd_file) as f:
-                crd_set = set(f.readlines())
+def check_crds(commad_type, app_name=None):
+    if app_name is None:
+        crd_file = 'crd-requirements.txt'
+    else:
+        crd_file = os.path.join(app_name, 'crd-requirements.txt')
+    if os.path.exists(crd_file):
+        with open(crd_file) as f:
+            crd_set = set(f.readlines())
 
-            missing_crds = _checking_crds_on_k8(crd_set)
+        missing_crds = _checking_crds_on_k8(crd_set)
 
-            if missing_crds:
-                print(
-                    "Warning: Template will "
-                    "not work on your current cluster \n"
-                    "Please contact your administrator "
-                    "to install the following operator(s): \n")
-                for crd in missing_crds:
-                    print(crd)
+        if missing_crds:
+            print(
+                "Warning: Template will "
+                "not work on your current cluster \n"
+                "Please contact your administrator "
+                "to install the following operator(s): \n")
+            for crd in missing_crds:
+                print(crd)
 
-                if commad_type is 'deploy':
-                    sys.exit(1)
-        else:
-            print('file does not exits: {}'.format(crd_file))
+            if commad_type is 'deploy':
+                sys.exit(1)
+    else:
+        print('file does not exits: {}'.format(crd_file))
 
 
 def _checking_crds_on_k8(crd_set):
     """
     Check if given crd list installed on K8 or not.
     """
-    config.load_kube_config()
-    api_client = client.ApiextensionsV1beta1Api()
-    current_crds = set([x['spec']['names']['kind'].lower()
-                        for x in api_client
-                       .list_custom_resource_definition()
-                       .to_dict()['items']])
-    # missing = False
-    missing_crds = (crd_set-current_crds)
-    # if missing_crds:
-    #     missing = True
-
-    # return missing, missing_crds
-    return missing_crds
+    try:
+        config.load_kube_config()
+        api_client = client.ApiextensionsV1beta1Api()
+        current_crds = set([x['metadata']['name']
+                            for x in api_client
+                           .list_custom_resource_definition()
+                           .to_dict()['items']])
+        return crd_set - current_crds
+    except Exception as ex:
+        print("Crd_Checking - Exception: {}".format(ex))
+        sys.exit(1)

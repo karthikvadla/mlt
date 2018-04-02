@@ -50,9 +50,9 @@ class InitCommand(Command):
             try:
                 shutil.copytree(templates_directory, self.app_name)
 
-                kubernetes_helpers.check_crds(skip_crd_check,
-                                              commad_type='init',
-                                              app_name=self.app_name)
+                if not skip_crd_check:
+                    kubernetes_helpers.check_crds(commad_type='init',
+                                                  app_name=self.app_name)
 
                 data = self._build_mlt_json()
                 with open(os.path.join(self.app_name, 'mlt.json'), 'w') as f:

@@ -88,7 +88,7 @@ def test_init_crd_check(kube_helpers, proc_helpers, check_output_mock):
         '--skip-crd-check': False,
         '<name>': new_dir
     }
-    kube_helpers._checking_crds_on_k8.return_value = (True, ['tfjob'])
+    kube_helpers._checking_crds_on_k8.return_value = set(['tfjob'])
     init = InitCommand(init_dict)
     try:
         with catch_stdout() as caught_output:

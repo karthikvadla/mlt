@@ -1,1 +1,1 @@
-tfjob
+tfjobs.kubeflow.org
