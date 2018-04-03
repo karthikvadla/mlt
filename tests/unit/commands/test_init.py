@@ -18,15 +18,14 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from mock import patch
 import os
 import pytest
-import shutil
 import uuid
+from mock import patch
 
 from mlt.commands.init import InitCommand
-from test_utils.io import catch_stdout
 from test_utils import project
+from test_utils.io import catch_stdout
 
 
 def test_init_dir_exists():
@@ -43,9 +42,9 @@ def test_init_dir_exists():
             with pytest.raises(SystemExit) as bad_init:
                 InitCommand(init_dict).action()
                 assert caught_output.getvalue() == \
-                    "Directory '{}' already exists: delete ".format(
-                        new_dir) + "before trying to initialize new " + \
-                    "application"
+                       "Directory '{}' already exists: delete ".format(
+                           new_dir) + "before trying to initialize new " + \
+                       "application"
                 assert bad_init.value.code == 1
     finally:
         os.rmdir(new_dir)

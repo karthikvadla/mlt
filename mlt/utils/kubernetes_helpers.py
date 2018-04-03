@@ -19,7 +19,6 @@
 #
 
 import os
-
 from subprocess import call
 
 from mlt.utils import process_helpers

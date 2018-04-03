@@ -19,6 +19,7 @@
 #
 
 from contextlib import contextmanager
+
 try:
     # python 2
     from cStringIO import StringIO

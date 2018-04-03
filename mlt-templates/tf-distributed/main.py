@@ -30,9 +30,8 @@ that distributed training is working by executing ops on all devices.
 import argparse
 import json
 import logging
-import os
-
 import numpy as np
+import os
 import tensorflow as tf
 
 

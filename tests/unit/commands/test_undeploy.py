@@ -19,6 +19,7 @@
 #
 
 from mock import patch
+
 from mlt.commands.undeploy import UndeployCommand
 
 

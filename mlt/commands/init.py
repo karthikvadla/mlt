@@ -21,10 +21,10 @@
 import getpass
 import json
 import os
-import sys
 import shutil
-from subprocess import check_output
+import sys
 import traceback
+from subprocess import check_output
 
 from mlt import TEMPLATES_DIR
 from mlt.commands import Command

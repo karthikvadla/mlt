@@ -20,128 +20,183 @@
 
 from __future__ import print_function
 
-from mock import patch, MagicMock
+import pytest
+from mock import MagicMock
 
 from mlt.commands.deploy import DeployCommand
 from test_utils.io import catch_stdout
 
 
-@patch('mlt.commands.deploy.files.fetch_action_arg')
-@patch('mlt.commands.deploy.config_helpers.load_config')
-@patch('mlt.commands.deploy.build_helpers.verify_build')
-@patch('mlt.commands.deploy.process_helpers')
-@patch('mlt.commands.deploy.kubernetes_helpers')
-@patch('mlt.commands.deploy.Template')
-@patch('mlt.commands.deploy.open')
-@patch('mlt.commands.deploy.Popen')
-@patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.listdir')
-def test_deploy_gce(listdir_mock, progress_bar, popen_mock, open_mock,
+@pytest.fixture
+def sleep(patch):
+    return patch('time.sleep')
+
+
+@pytest.fixture
+def fetch_action_arg(patch):
+    return patch('files.fetch_action_arg', MagicMock(return_value='output'))
+
+
+@pytest.fixture
+def kube_helpers(patch):
+    return patch('kubernetes_helpers')
+
+
+@pytest.fixture
+def json(patch):
+    return patch('json')
+
+
+@pytest.fixture
+def open_mock(patch):
+    return patch('open')
+
+
+@pytest.fixture
+def popen_mock(patch):
+    popen_mock = MagicMock()
+    popen_mock.return_value.poll.return_value = 0
+    return patch('Popen', popen_mock)
+
+
+@pytest.fixture
+def process_helpers(patch):
+    return patch('process_helpers')
+
+
+@pytest.fixture
+def progress_bar(patch):
+    progress_mock = MagicMock()
+    progress_mock.duration_progress.side_effect = lambda x, y, z: print(
+        'Pushing ')
+    return patch('progress_bar', progress_mock)
+
+
+@pytest.fixture
+def template(patch):
+    return patch('Template')
+
+
+@pytest.fixture
+def verify_build(patch):
+    return patch('build_helpers.verify_build')
+
+
+@pytest.fixture
+def verify_init(patch):
+    return patch('config_helpers.load_config')
+
+
+@pytest.fixture
+def walk_mock(patch):
+    return patch('os.walk', MagicMock(return_value=['foo', 'bar']))
+
+
+@pytest.fixture
+def yaml(patch):
+    return patch('yaml.load')
+
+
+def deploy(no_push, interactive, extra_config_args, retries=5):
+    deploy = DeployCommand(
+        {'deploy': True, '--no-push': no_push,
+         '--interactive': interactive, '--retries': retries})
+    deploy.config = {'name': 'app', 'namespace': 'namespace'}
+    deploy.config.update(extra_config_args)
+
+    with catch_stdout() as caught_output:
+        deploy.action()
+        output = caught_output.getvalue()
+    return output
+
+
+def verify_successful_deploy(output, did_push=True, interactive=False):
+    """assert pushing, deploying, then objs created, then pushed"""
+    pushing = output.find('Pushing ')
+    push_skip = output.find('Skipping image push')
+    deploying = output.find('Deploying ')
+    inspecting = output.find('Inspect created objects by running:\n')
+    pushed = output.find('Pushed to ')
+    pod_connect = output.find('Connecting to pod...')
+
+    if did_push:
+        assert all(var >= 0 for var in (
+            deploying, inspecting, pushing, pushed))
+        assert deploying < inspecting, pushing < pushed
+    else:
+        assert all(var == -1 for var in (pushing, pushed))
+        assert all(var >= 0 for var in (deploying, inspecting, push_skip))
+        assert push_skip < deploying, deploying < inspecting
+
+    if interactive:
+        assert pod_connect > inspecting
+
+
+def test_deploy_gce(walk_mock, progress_bar, popen_mock, open_mock,
                     template, kube_helpers, process_helpers, verify_build,
                     verify_init, fetch_action_arg):
-    listdir_mock.return_value = ['besttacofile', 'besttrumpetfile']
-    progress_bar.duration_progress.side_effect = \
-        lambda x, y, z: print('Pushing ')
-    popen_mock.return_value.poll.return_value = 0
-
-    deploy = DeployCommand({'deploy': True, '--no-push': False})
-    deploy.config = {
-        'gceProject': 'gcr://tacoprojectbestproject',
-        'name': 'besttacoapp',
-        'namespace': 'besttaconamespace'
-    }
-    fetch_action_arg.return_value = 'output'
-
-    with catch_stdout() as caught_output:
-        deploy.action()
-        output = caught_output.getvalue()
-
-    # assert pushing, deploying, then objs created, then pushed
-    pushing = output.find('Pushing ')
-    deploying = output.find('Deploying ')
-    inspecting = output.find('Inspect created objects by running:\n')
-    pushed = output.find('Pushed to ')
-    assert all(var >= 0 for var in (deploying, inspecting, pushing, pushed))
-    assert deploying < inspecting, pushing < pushed
+    output = deploy(
+        no_push=False, interactive=False,
+        extra_config_args={'gceProject': 'gcr://projectfoo'})
+    verify_successful_deploy(output)
 
 
-@patch('mlt.commands.deploy.files.fetch_action_arg')
-@patch('mlt.commands.deploy.config_helpers.load_config')
-@patch('mlt.commands.deploy.build_helpers.verify_build')
-@patch('mlt.commands.deploy.process_helpers')
-@patch('mlt.commands.deploy.kubernetes_helpers')
-@patch('mlt.commands.deploy.Template')
-@patch('mlt.commands.deploy.open')
-@patch('mlt.commands.deploy.Popen')
-@patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.listdir')
-def test_deploy_docker(listdir_mock, progress_bar, popen_mock, open_mock,
+def test_deploy_docker(walk_mock, progress_bar, popen_mock, open_mock,
                        template, kube_helpers, process_helpers, verify_build,
                        verify_init, fetch_action_arg):
-    listdir_mock.return_value = ['besttacofile', 'besttrumpetfile']
-    progress_bar.duration_progress.side_effect = \
-        lambda x, y, z: print('Pushing ')
-    popen_mock.return_value.poll.return_value = 0
-
-    deploy = DeployCommand({'deploy': True, '--no-push': False})
-    deploy.config = {
-        'registry': 'dockerhub',
-        'name': 'besttacoapp',
-        'namespace': 'besttaconamespace'
-    }
-    fetch_action_arg.return_value = 'output'
-
-    with catch_stdout() as caught_output:
-        deploy.action()
-        output = caught_output.getvalue()
-
-    # assert pushing, deploying, then objs created, then pushed
-    pushing = output.find('Pushing ')
-    deploying = output.find('Deploying ')
-    inspecting = output.find('Inspect created objects by running:\n')
-    pushed = output.find('Pushed to ')
-    assert all(var >= 0 for var in (deploying, inspecting, pushing, pushed))
-    assert deploying < inspecting, pushing < pushed
+    output = deploy(
+        no_push=False, interactive=False,
+        extra_config_args={'registry': 'dockerhub'})
+    verify_successful_deploy(output)
 
 
-@patch('mlt.commands.deploy.files.fetch_action_arg')
-@patch('mlt.commands.deploy.config_helpers.load_config')
-@patch('mlt.commands.deploy.build_helpers.verify_build')
-@patch('mlt.commands.deploy.process_helpers')
-@patch('mlt.commands.deploy.kubernetes_helpers')
-@patch('mlt.commands.deploy.Template')
-@patch('mlt.commands.deploy.open')
-@patch('mlt.commands.deploy.Popen')
-@patch('mlt.commands.deploy.progress_bar')
-@patch('mlt.commands.deploy.os.listdir')
-def test_deploy_without_push(listdir_mock, progress_bar, popen_mock, open_mock,
+def test_deploy_without_push(walk_mock, progress_bar, popen_mock, open_mock,
                              template, kube_helpers, process_helpers,
                              verify_build, verify_init, fetch_action_arg):
-    listdir_mock.return_value = ['foo', 'bar']
-    progress_bar.duration_progress.side_effect = \
-        lambda x, y, z: print('Pushing ')
-    popen_mock.return_value.poll.return_value = 0
+    output = deploy(
+        no_push=True, interactive=False,
+        extra_config_args={'gceProject': 'gcr://projectfoo'})
+    verify_successful_deploy(output, did_push=False)
 
-    deploy = DeployCommand({'deploy': True, '--no-push': True})
-    deploy.config = {
-        'gceProject': 'gcr://projectfoo',
-        'name': 'foo',
-        'namespace': 'foo'
-    }
-    fetch_action_arg.return_value = 'output'
 
-    with catch_stdout() as caught_output:
-        deploy.action()
-        output = caught_output.getvalue()
+def test_deploy_interactive_one_file(walk_mock, progress_bar, popen_mock,
+                                     open_mock, template, kube_helpers,
+                                     process_helpers, verify_build,
+                                     verify_init, fetch_action_arg, sleep,
+                                     yaml, json):
+    walk_mock.return_value = ['foo']
+    yaml.return_value = {
+        'template': {'foo': 'bar'}, 'containers': [{'foo': 'bar'}]}
+    json.loads.return_value = {'status': {'phase': 'Running'}}
+    output = deploy(
+        no_push=False, interactive=True,
+        extra_config_args={'registry': 'dockerhub'})
+    verify_successful_deploy(output, interactive=True)
 
-    # assert pushing, deploying, then objs created, then pushed
-    skipping_push = output.find('Skipping image push')
-    deploying = output.find('Deploying ')
-    inspecting = output.find('Inspect created objects by running:\n')
-    assert all(var >= 0 for var in (deploying, inspecting, skipping_push))
-    assert skipping_push < deploying < inspecting
 
-    # we should not see pushing/pushed messages
-    pushing = output.find('Pushing ')
-    pushed = output.find('Pushed to ')
-    assert all(var == -1 for var in (pushing, pushed))
+def test_deploy_interactive_two_files(walk_mock, progress_bar, popen_mock,
+                                      open_mock, template, kube_helpers,
+                                      process_helpers, verify_build,
+                                      verify_init, fetch_action_arg, sleep,
+                                      yaml, json):
+    json.loads.return_value = {'status': {'phase': 'Running'}}
+    yaml.return_value = {
+        'template': {'foo': 'bar'}, 'containers': [{'foo': 'bar'}]}
+    output = deploy(
+        no_push=False, interactive=True,
+        extra_config_args={'registry': 'dockerhub', '<kube_spec>': 'r'})
+    verify_successful_deploy(output, interactive=True)
+
+
+def test_deploy_interactive_pod_not_run(walk_mock, progress_bar, popen_mock,
+                                        open_mock, template, kube_helpers,
+                                        process_helpers, verify_build,
+                                        verify_init, fetch_action_arg, sleep,
+                                        yaml, json):
+    json.loads.return_value = {'status': {'phase': 'Error'}}
+    yaml.return_value = {
+        'template': {'foo': 'bar'}, 'containers': [{'foo': 'bar'}]}
+    with pytest.raises(ValueError):
+        output = deploy(
+            no_push=False, interactive=True,
+            extra_config_args={'registry': 'dockerhub', '<kube_spec>': 'r'})

@@ -18,9 +18,8 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from mock import patch
 import pytest
-import uuid
+from mock import patch
 from subprocess import CalledProcessError
 
 from mlt.utils.process_helpers import run, run_popen

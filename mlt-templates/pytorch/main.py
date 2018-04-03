@@ -20,9 +20,8 @@
 
 
 import os
-import torch
-import torch.distributed as dist
 from torch.multiprocessing import Process
+from torch import distributed as dist
 
 
 def run(rank, size):

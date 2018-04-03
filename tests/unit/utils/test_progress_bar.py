@@ -19,7 +19,6 @@
 #
 
 from mock import patch, MagicMock
-import pytest
 
 from mlt.utils.progress_bar import duration_progress
 

@@ -18,15 +18,14 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-import time
 import os
-from threading import Timer
+import time
 from subprocess import call
+from threading import Timer
 
 
 class EventHandler(object):
-    def __init__(self, callback, args):
-        self.args = args
+    def __init__(self, callback):
         self.last_changed = time.time()
         self.dirty = False
         self.timer = None
@@ -46,5 +45,5 @@ class EventHandler(object):
 
         print("event.src_path {}".format(event.src_path))
 
-        self.timer = Timer(3, lambda: self.callback(self.args))
+        self.timer = Timer(3, lambda: self.callback())
         self.timer.start()

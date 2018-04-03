@@ -17,17 +17,17 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 #
-
-import pytest
-
-from mlt.utils.config_helpers import load_config
-from test_utils.io import catch_stdout
+import shutil
+import tempfile
+from contextlib import contextmanager
 
 
-def test_needs_init_command_bad_init():
-    with catch_stdout() as caught_output:
-        with pytest.raises(SystemExit) as bad_init:
-            load_config()
-            assert caught_output.getvalue() == "This command requires you " + \
-                   "to be in an `mlt init` built directory"
-            assert bad_init.value.code == 1
+@contextmanager
+def create_work_dir():
+    workdir = tempfile.mkdtemp()
+    try:
+        yield workdir
+    finally:
+        # even on error we still need to remove dir when done
+        # https://docs.python.org/2/library/tempfile.html#tempfile.mkdtemp
+        shutil.rmtree(workdir)
