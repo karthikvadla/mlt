@@ -20,11 +20,11 @@
 
 import os
 import sys
+import json
 
 from subprocess import call
 
 from mlt.utils import process_helpers
-import json
 
 
 def ensure_namespace_exists(ns):
