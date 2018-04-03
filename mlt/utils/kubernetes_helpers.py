@@ -24,7 +24,7 @@ import sys
 from subprocess import call
 
 from mlt.utils import process_helpers
-from kubernetes import client, config
+import json
 
 
 def ensure_namespace_exists(ns):
@@ -41,10 +41,9 @@ def check_crds(commad_type, app_name=None):
         crd_file = os.path.join(app_name, 'crd-requirements.txt')
     if os.path.exists(crd_file):
         with open(crd_file) as f:
-            crd_set = set(f.readlines())
+            crd_set = set(f.read().splitlines())
 
         missing_crds = checking_crds_on_k8(crd_set)
-
         if missing_crds:
             print(
                 "Warning: Template will "
@@ -65,12 +64,12 @@ def checking_crds_on_k8(crd_set):
     Check if given crd list installed on K8 or not.
     """
     try:
-        config.load_kube_config()
-        api_client = client.ApiextensionsV1beta1Api()
-        current_crds = set([x['metadata']['name']
-                            for x in api_client
-                           .list_custom_resource_definition()
-                           .to_dict()['items']])
+        current_crds_json = process_helpers.run_popen(
+            "kubectl get crd -o json", shell=True
+        ).stdout.read().decode('utf-8')
+        current_crds = set([str(x['metadata']['name'])
+                            for x in
+                            json.loads(current_crds_json)['items']])
         return crd_set - current_crds
     except Exception as ex:
         print("Crd_Checking - Exception: {}".format(ex))

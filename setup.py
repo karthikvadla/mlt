@@ -35,8 +35,7 @@ setup(name='mlt',
           'tabulate>=0.8.2',
           'termcolor>=1.1.0',
           'PyYAML>=3.12',
-          'watchdog>=0.8.3',
-          'kubernetes>=5.0.0'
+          'watchdog>=0.8.3'
       ],
       entry_points={
           'console_scripts': ['mlt=mlt.main:main']
