@@ -31,8 +31,8 @@ from test_utils.io import catch_stdout
 
 
 @pytest.fixture
-def kube_helpers(patch):
-    return patch('kubernetes_helpers')
+def checking_crds_mock(patch):
+    return patch('kubernetes_helpers.checking_crds_on_k8')
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ def test_init(open_mock, process_helpers, shutil_mock, check_output_mock):
     assert init.app_name == new_dir
 
 
-def test_init_crd_check(kube_helpers, process_helpers, check_output_mock):
+def test_init_crd_check(checking_crds_mock, process_helpers, check_output_mock):
     new_dir = str(uuid.uuid4())
     init_dict = {
         'init': True,
@@ -107,7 +107,7 @@ def test_init_crd_check(kube_helpers, process_helpers, check_output_mock):
         '--skip-crd-check': False,
         '<name>': new_dir
     }
-    kube_helpers.checking_crds_on_k8.return_value = {'tfjobs.kubeflow.org'}
+    checking_crds_mock.return_value = {'tfjobs.kubeflow.org'}
     init = InitCommand(init_dict)
     try:
         with catch_stdout() as caught_output:
