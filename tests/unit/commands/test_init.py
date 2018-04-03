@@ -21,6 +21,7 @@
 import os
 import pytest
 import uuid
+import shutil
 from mock import patch
 
 from mlt.commands.init import InitCommand
