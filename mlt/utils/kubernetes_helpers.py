@@ -74,4 +74,4 @@ def checking_crds_on_k8(crd_set):
         return crd_set - current_crds
     except Exception as ex:
         print("Crd_Checking - Exception: {}".format(ex))
-        return []
+        return set()
