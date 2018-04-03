@@ -18,10 +18,10 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-import time
 import os
-from threading import Timer
+import time
 from subprocess import call
+from threading import Timer
 
 
 class EventHandler(object):

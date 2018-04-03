@@ -219,8 +219,7 @@ class DeployCommand(Command):
         self.template_location['metadata'] = {'labels': {'debug': 'true'}}
         self.containers_location[0].update(
             {'command':
-             ["/bin/bash", "-c",
-              "trap : TERM INT; sleep infinity & wait"]})
+             ["/bin/bash", "-c", "trap : TERM INT; sleep infinity & wait"]})
         return json.dumps(data)
 
     def _find_metadata_and_container_spec(self, data):

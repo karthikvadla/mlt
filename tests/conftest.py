@@ -18,16 +18,14 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from mock import MagicMock
 import inspect
-import pytest
 import os
+import pytest
 import sys
-
+from mock import MagicMock
 
 # enable test_utils to be used in tests via `from test_utils... import ...
 sys.path.append(os.path.join(os.path.dirname(__file__), 'test_utils'))
-
 
 MODULES = ('mlt.tests',)
 MODULES_REPLACE = ('tests.unit', 'mlt')
@@ -45,7 +43,7 @@ def patch_setattr(module_names, module_replace, monkeypatch, path, m):
     if hasattr(path, '__module__'):
         monkeypatch.setattr('.'.join((path.__module__, path.__name__)), m)
         return
-    elif any(path.startswith(i+'.') for i in module_names):
+    elif any(path.startswith(i + '.') for i in module_names):
         # full path.  OK.
         monkeypatch.setattr(path, m)
     else:
@@ -75,6 +73,7 @@ def patch(monkeypatch):
        - patch('files.fetch_action_arg', MagicMock(return_value='output'))
        Without the second arg, will default to just MagicMock()
     """
+
     def wrapper(path, mock=None):
         m = mock if mock is not None else MagicMock()
         patch_setattr(MODULES, MODULES_REPLACE, monkeypatch, path, m)

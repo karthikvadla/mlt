@@ -21,9 +21,9 @@
 from __future__ import print_function
 
 from mock import patch, MagicMock
+from test_utils.io import catch_stdout
 
 from mlt.commands.build import BuildCommand
-from test_utils.io import catch_stdout
 
 
 @patch('mlt.commands.build.config_helpers.load_config')

@@ -18,8 +18,9 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from test_utils.files import create_work_dir
 from test_utils.e2e_commands import CommandTester
+from test_utils.files import create_work_dir
+
 
 # NOTE: you need to deploy first before you deploy with --no-push
 # otherwise you have no image to use to make new container from

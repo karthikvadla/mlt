@@ -58,8 +58,9 @@ Options:
                             image from your last run.
 
 """
-from docopt import docopt
 import re
+from docopt import docopt
+
 from mlt.commands import (BuildCommand, DeployCommand, InitCommand,
                           TemplatesCommand, UndeployCommand)
 

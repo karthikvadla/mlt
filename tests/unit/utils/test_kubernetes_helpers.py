@@ -18,8 +18,8 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from mock import patch
 import uuid
+from mock import patch
 
 from mlt.utils.kubernetes_helpers import ensure_namespace_exists
 

@@ -18,10 +18,11 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-from contextlib import contextmanager
-from mlt.utils import process_helpers
 import shutil
 import tempfile
+from contextlib import contextmanager
+
+from mlt.utils import process_helpers
 
 
 @contextmanager

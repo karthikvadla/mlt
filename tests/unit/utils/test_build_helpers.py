@@ -19,7 +19,6 @@
 #
 
 from mock import patch
-import pytest
 
 from mlt.utils.build_helpers import verify_build
 

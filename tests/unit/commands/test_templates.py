@@ -19,8 +19,8 @@
 #
 
 from mlt.commands.templates import TemplatesCommand
-from test_utils.io import catch_stdout
 from test_utils import project
+from test_utils.io import catch_stdout
 
 
 def test_template_list():

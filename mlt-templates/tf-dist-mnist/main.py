@@ -21,8 +21,8 @@
 
 import json
 import logging
-import os
 import numpy as np
+import os
 import socket
 import subprocess
 import tensorflow as tf
@@ -170,7 +170,7 @@ def main(_):
             BEGIN:  Data loader
             """
             # Load pre-shuffled MNIST data into train and test sets
-            (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.\
+            (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist. \
                 load_data()
 
             x_train = np.expand_dims(x_train, -1)
@@ -366,8 +366,8 @@ def main(_):
                                             summary)  # Update the summary
 
                     logging.info("[step: {:,} of {:,}]  loss: {:.4f}, "
-                                 "accuracy: {:.2f}" .format(step, NUM_STEPS,
-                                                            loss_v, acc_val))
+                                 "accuracy: {:.2f}".format(step, NUM_STEPS,
+                                                           loss_v, acc_val))
 
                 # Shuffle every epoch
                 if (batch_idx == 0) and (step > num_batches):
