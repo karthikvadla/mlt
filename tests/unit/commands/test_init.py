@@ -17,16 +17,42 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 #
+from __future__ import print_function
 
 import os
-import pytest
 import uuid
 import shutil
-from mock import patch
+
+import pytest
 
 from mlt.commands.init import InitCommand
 from test_utils import project
 from test_utils.io import catch_stdout
+
+
+@pytest.fixture
+def kube_helpers(patch):
+    return patch('kubernetes_helpers')
+
+
+@pytest.fixture
+def open_mock(patch):
+    return patch('open')
+
+
+@pytest.fixture
+def shutil_mock(patch):
+    return patch('shutil')
+
+
+@pytest.fixture
+def process_helpers(patch):
+    return patch('process_helpers')
+
+
+@pytest.fixture
+def check_output_mock(patch):
+    return patch('check_output')
 
 
 def test_init_dir_exists():
@@ -52,11 +78,7 @@ def test_init_dir_exists():
         os.rmdir(new_dir)
 
 
-@patch('mlt.commands.init.check_output')
-@patch('mlt.commands.init.shutil')
-@patch('mlt.commands.init.process_helpers')
-@patch('mlt.commands.init.open')
-def test_init(open_mock, proc_helpers, shutil_mock, check_output_mock):
+def test_init(open_mock, process_helpers, shutil_mock, check_output_mock):
     check_output_mock.return_value.decode.return_value = 'bar'
     new_dir = str(uuid.uuid4())
 
@@ -74,10 +96,7 @@ def test_init(open_mock, proc_helpers, shutil_mock, check_output_mock):
     assert init.app_name == new_dir
 
 
-@patch('mlt.commands.init.check_output')
-@patch('mlt.commands.init.process_helpers')
-@patch('mlt.commands.init.kubernetes_helpers')
-def test_init_crd_check(kube_helpers, proc_helpers, check_output_mock):
+def test_init_crd_check(kube_helpers, process_helpers, check_output_mock):
     new_dir = str(uuid.uuid4())
     init_dict = {
         'init': True,
