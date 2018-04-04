@@ -47,11 +47,15 @@ def check_crds(exit_on_failure=False, app_name=None):
 
         missing_crds = checking_crds_on_k8(crd_set)
         if missing_crds:
+            if exit_on_failure:
+                message_type = "Error"
+            else:
+                message_type = "Warning"
             print(
-                "Warning: Template will "
+                "{}: Template will "
                 "not work on your current cluster \n"
                 "Please contact your administrator "
-                "to install the following operator(s): \n")
+                "to install the following operator(s): \n".format(message_type))
             for crd in missing_crds:
                 print(crd)
 
