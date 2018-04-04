@@ -41,7 +41,7 @@ class DeployCommand(Command):
     def action(self):
         skip_crd_check = self.args['--skip-crd-check']
         if not skip_crd_check:
-            kubernetes_helpers.check_crds(commad_type='deploy')
+            kubernetes_helpers.check_crds(exit_on_failure=True)
 
         if self.args['--no-push']:
             print("Skipping image push")

@@ -34,13 +34,15 @@ def ensure_namespace_exists(ns):
         process_helpers.run(["kubectl", "create", "namespace", ns])
 
 
-def check_crds(commad_type, app_name=None):
+def check_crds(exit_on_failure=False, app_name=None):
     if app_name is None:
         crd_file = 'crd-requirements.txt'
     else:
         crd_file = os.path.join(app_name, 'crd-requirements.txt')
     if os.path.exists(crd_file):
         with open(crd_file) as f:
+            # using f.read().splitlines() instead of f.readlines()
+            # as it does not include new line(\n)
             crd_set = set(f.read().splitlines())
 
         missing_crds = checking_crds_on_k8(crd_set)
@@ -53,7 +55,7 @@ def check_crds(commad_type, app_name=None):
             for crd in missing_crds:
                 print(crd)
 
-            if commad_type is 'deploy':
+            if exit_on_failure:
                 sys.exit(1)
     else:
         print('file does not exits: {}'.format(crd_file))
@@ -63,6 +65,7 @@ def checking_crds_on_k8(crd_set):
     """
     Check if given crd list installed on K8 or not.
     """
+
     try:
         current_crds_json = process_helpers.run_popen(
             "kubectl get crd -o json", shell=True
