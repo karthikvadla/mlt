@@ -42,6 +42,11 @@ class LogsCommand(Command):
 
     def action(self):
         """
-        Display logs from all pods.
+        Display logs and events for all pods for latest run.
         
         """
+        logs_and_events = self.get_logs_and_events_for_latest_run()
+
+    def get_logs_and_events_for_latest_run(self):
+        logs_and_events = ""
+        return logs_and_events
