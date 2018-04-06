@@ -14,3 +14,4 @@ pip-selfcheck.json
 include
 lib
 *.pyc
+.idea/

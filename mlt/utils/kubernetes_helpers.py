@@ -59,8 +59,6 @@ def check_crds(exit_on_failure=False, app_name=None):
 
             if exit_on_failure:
                 sys.exit(1)
-    else:
-        print('file does not exits: {}'.format(crd_file))
 
 
 def checking_crds_on_k8(crd_set):
